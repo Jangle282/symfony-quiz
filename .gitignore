@@ -1,0 +1,27 @@
+# PHP
+/vendor/
+/.env
+/.env.local
+/var/
+/phpunit.*
+/.phpunit.result.cache
+
+# Node
+/node_modules/
+/front*/dist
+/.vite
+/npm-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+
+# Docker
+/.dockerignore
+/docker-compose.override.yml
+
+# IDEs
+/.idea/
+/.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

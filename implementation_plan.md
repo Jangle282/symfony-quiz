@@ -51,7 +51,6 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
   - `react-router-dom`
   - `axios`
   - `@tanstack/react-query` (for API state management)
-  - `zustand` or `redux-toolkit` (for global state)
   - `tailwindcss` or `mui` (UI framework)
 - Install dev dependencies:
   - `@testing-library/react`
@@ -305,9 +304,10 @@ src/
 │   ├── api.ts
 │   ├── authService.ts
 │   └── gameService.ts
+├── context/
+│   └── AuthContext.tsx
 ├── hooks/
 ├── types/
-├── store/
 └── utils/
 ```
 
@@ -350,16 +350,18 @@ src/
 
 ## Phase 8: Frontend - Authentication
 
-### 8.1 State Management
-- Create auth store (Zustand/Redux):
+### 8.1 Auth Context Setup
+- Create AuthContext using React Context API
   - `user` state
   - `token` state
-  - `isAuthenticated` computed
-  - `login` action
-  - `logout` action
-  - `setUser` action
+  - `isAuthenticated` computed value
+  - `login` function
+  - `logout` function
+  - `setUser` function
+- Create AuthProvider component
 - Persist token in localStorage
 - Auto-load user on app initialization
+- Create `useAuth` hook for consuming context
 
 ### 8.2 Authentication Components
 - Create LoginPage component
@@ -396,17 +398,20 @@ src/
 ## Phase 10: Frontend - Game Play
 
 ### 10.1 Game State Management
-- Create game store:
-  - `currentGame` state
-  - `currentQuestion` state
-  - `selectedAnswer` state
-  - `questionIndex` state
-  - Actions for state updates
+- Use local component state (useState) for:
+  - `currentGame`
+  - `currentQuestion`
+  - `selectedAnswer`
+  - `questionIndex`
+  - `isSubmitted`
+  - `answerFeedback`
+- Use React Query for API data fetching and caching
 
 ### 10.2 Game Components
 - Create GamePage component
   - Load game on mount
   - Display current question
+  - Manage local game state
 - Create Question component
   - Display question text
   - Display category and difficulty
@@ -461,7 +466,7 @@ src/
 - Create ProfilePage component
 - Display user information
 - Create GameHistory component
-  - List all saved games
+  - List all saved games (using React Query)
   - Show date, score, and details
   - Add delete button for each game
 - Create UpdateUsername form
@@ -484,6 +489,7 @@ src/
 - Test AnswerOptions selection
 - Test ResultsPage score display
 - Test ProfilePage data display
+- Test AuthContext provider and hook
 
 ### 12.2 Integration Tests
 - Test authentication flow
@@ -503,12 +509,4 @@ src/
 - Create consistent color scheme
 - Design responsive layouts
 - Add loading spinners
-- Add error messages/toasts
-- Add success confirmations
-- Style forms with validation feedback
-
-### 13.2 Accessibility
-- Add proper ARIA labels
-- Ensure keyboard navigation
-- Add focus indicators
-- Test with screen readers
+- Add error messages/

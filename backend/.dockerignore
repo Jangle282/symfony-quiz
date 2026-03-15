@@ -1,0 +1,14 @@
+vendor/
+var/
+.env
+.env.local
+/node_modules
+/public/bundles
+/build
+
+# Docker
+Dockerfile
+
+# IDE
+/.idea
+/.vscode
