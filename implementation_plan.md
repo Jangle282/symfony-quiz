@@ -147,7 +147,7 @@ Create the following entities:
 ### 3.1 User Authentication
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
-  - Validate password strength (minimum 8 characters, mix of letters, numbers, symbols)
+  - Validate password strength (minimum 10 characters, mix of letters, numbers, symbols)
   - Hash password with bcrypt
   - Return user data (without password)
 - Implement login endpoint (`POST /api/login`)
@@ -168,24 +168,28 @@ Create the following entities:
   - Access control
   - Role hierarchy
 - Add authentication middleware
-- Implement rate limiting for API endpoints (e.g., authentication, game actions) using Symfony's rate limiter to prevent abuse.
+- Implement rate limiting for API endpoints (e.g., registration, authentication, game actions) using Symfony's rate limiter to prevent abuse.
 - Implement CSRF protection on all state-changing endpoints (registration, login, game creation, answer submission, profile updates) using Symfony's CSRF token system.
 
 ### 3.3 User Profile Management
 - Create profile endpoint (`GET /api/profile`)
   - Return user data
   - Return games participated in (via UserGame)
+  - Users can only see their own profiles
 - Update username endpoint (`PATCH /api/profile/username`)
   - Validate uniqueness
   - Update user
+  - Users can only update their own username
 - Update password endpoint (`PATCH /api/profile/password`)
   - Validate old password
   - Validate new password strength
   - Hash new password
   - Update user
+  - Users can only update their own password
 - Delete game endpoint (`DELETE /api/games/{id}`)
   - Check user is host of the game
   - Soft delete or hard delete game
+  - Users can only delete their own games
 
 ---
 
@@ -229,6 +233,7 @@ Create abstraction layer for question sources:
   - Fetch 5 questions from provider
   - Store questions in database
   - Return game ID and first question
+  - The returned question cannot contain the correct answer
 - Join game (`POST /api/games/{id}/join`) - for future multi-user
   - Add user as participant
 - Get current game state (`GET /api/games/{id}`)
@@ -238,6 +243,8 @@ Create abstraction layer for question sources:
 - Get next question (`GET /api/games/{id}/questions/next`)
   - Return next unanswered question for the user
   - Return null if all answered
+  - Do not return which answer is correct in the response
+  - Check the User has joined the game
 
 ### 5.2 Answer Submission
 - Submit answer endpoint (`POST /api/games/{id}/answers`)
