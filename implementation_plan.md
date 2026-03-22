@@ -147,6 +147,7 @@ Create the following entities:
 ### 3.1 User Authentication
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
+  - Validate password strength (minimum 8 characters, mix of letters, numbers, symbols)
   - Hash password with bcrypt
   - Return user data (without password)
 - Implement login endpoint (`POST /api/login`)
@@ -167,7 +168,8 @@ Create the following entities:
   - Access control
   - Role hierarchy
 - Add authentication middleware
-- Implement CSRF protection where needed
+- Implement rate limiting for API endpoints (e.g., authentication, game actions) using Symfony's rate limiter to prevent abuse.
+- Implement CSRF protection on all state-changing endpoints (registration, login, game creation, answer submission, profile updates) using Symfony's CSRF token system.
 
 ### 3.3 User Profile Management
 - Create profile endpoint (`GET /api/profile`)
@@ -178,6 +180,7 @@ Create the following entities:
   - Update user
 - Update password endpoint (`PATCH /api/profile/password`)
   - Validate old password
+  - Validate new password strength
   - Hash new password
   - Update user
 - Delete game endpoint (`DELETE /api/games/{id}`)
