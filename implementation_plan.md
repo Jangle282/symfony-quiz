@@ -81,13 +81,21 @@ Create the following entities:
 #### Game Entity
 ```
 - id (uuid, primary key)
-- user_id (foreign key to User)
-- total_score (integer)
+- name (string, nullable) - optional game name
+- created_by (uuid, foreign key to User) - user who created the game
+- total_score (integer) - team score
 - total_questions (integer)
-- started_at (datetime)
 - completed_at (datetime, nullable)
-- saved (boolean, default false)
 - created_at (datetime)
+```
+
+#### UserGame Entity (Join table for many-to-many User-Game with additional data)
+```
+- id (uuid, primary key)
+- user_id (uuid, foreign key to User)
+- game_id (uuid, foreign key to Game)
+- joined_at (datetime)
+- role (string, enum: 'host', 'participant')
 ```
 
 #### Round Entity
@@ -124,7 +132,8 @@ Create the following entities:
 
 ### 2.2 Doctrine Entity Implementation
 - Create User entity with validation
-- Create Game entity with relationships
+- Create Game entity with relationships (ManyToMany with User via UserGame)
+- Create UserGame entity for game participation
 - Create Round entity
 - Create Question entity
 - Create Answer entity
@@ -150,7 +159,7 @@ Create the following entities:
 
 ### 3.2 Authorization & Security
 - Create Voter for Game resource
-  - Check user owns the game
+  - Check user is a participant in the game
 - Create Voter for User profile
   - Check user can only access own profile
 - Configure security.yaml with:
@@ -163,7 +172,7 @@ Create the following entities:
 ### 3.3 User Profile Management
 - Create profile endpoint (`GET /api/profile`)
   - Return user data
-  - Return game history
+  - Return games participated in (via UserGame)
 - Update username endpoint (`PATCH /api/profile/username`)
   - Validate uniqueness
   - Update user
@@ -172,7 +181,7 @@ Create the following entities:
   - Hash new password
   - Update user
 - Delete game endpoint (`DELETE /api/games/{id}`)
-  - Check authorization
+  - Check user is host of the game
   - Soft delete or hard delete game
 
 ---
@@ -212,23 +221,26 @@ Create abstraction layer for question sources:
 ### 5.1 Game Management Endpoints
 - Start new game (`POST /api/games`)
   - Create Game entity
+  - Create UserGame entity for creator (role: host)
   - Create Round entity (1 round, general knowledge)
   - Fetch 5 questions from provider
   - Store questions in database
   - Return game ID and first question
+- Join game (`POST /api/games/{id}/join`) - for future multi-user
+  - Add user as participant
 - Get current game state (`GET /api/games/{id}`)
   - Return game progress
   - Return current question
-  - Check authorization
+  - Check user is participant
 - Get next question (`GET /api/games/{id}/questions/next`)
-  - Return next unanswered question
+  - Return next unanswered question for the user
   - Return null if all answered
 
 ### 5.2 Answer Submission
 - Submit answer endpoint (`POST /api/games/{id}/answers`)
   - Accept question_id and user_answer
   - Validate question belongs to game
-  - Check if already answered
+  - Check if already answered (by team)
   - Create Answer entity
   - Calculate if correct
   - Update game score
@@ -237,20 +249,14 @@ Create abstraction layer for question sources:
 ### 5.3 Game Completion
 - Complete game endpoint (`POST /api/games/{id}/complete`)
   - Mark game as completed
-  - Calculate final score
+  - Calculate final team score
   - Return results summary
-- Save game score (`POST /api/games/{id}/save`)
-  - Mark game as saved
-  - Return confirmation
-- Discard game (`DELETE /api/games/{id}/discard`)
-  - Delete unsaved game
-  - Check authorization
 
 ### 5.4 Results
 - Get game results (`GET /api/games/{id}/results`)
-  - Return total score
-  - Return question breakdown (question, user answer, correct answer, is_correct)
-  - Check authorization
+  - Return total team score
+  - Return question breakdown (question, team answer, correct answer, is_correct)
+  - Check user is participant
 
 ---
 
@@ -337,8 +343,7 @@ src/
   - `submitAnswer(gameId, questionId, answer)`
   - `getNextQuestion(gameId)`
   - `completeGame(gameId)`
-  - `saveGame(gameId)`
-  - `discardGame(gameId)`
+  - `deleteGame(gameId)`
   - `getResults(gameId)`
 - Create profileService with:
   - `getProfile()`
@@ -454,19 +459,15 @@ src/
   - Show user's answer
   - Show correct answer
   - Indicate correct/incorrect with styling
-- Add "Save Score" button
-  - Call save API
-  - Show confirmation
-  - Navigate to lobby or profile
-- Add "Discard" button
-  - Call discard API
+- Add "Delete" button
+  - Call delete API
   - Navigate to lobby
 
 ### 11.2 Profile Page
 - Create ProfilePage component
 - Display user information
 - Create GameHistory component
-  - List all saved games (using React Query)
+  - List all completed games (using React Query)
   - Show date, score, and details
   - Add delete button for each game
 - Create UpdateUsername form
