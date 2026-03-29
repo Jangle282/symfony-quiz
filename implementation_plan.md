@@ -9,6 +9,12 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
 - **Infrastructure**: Docker & Docker Compose
 - **API**: Open Trivia Database (https://opentdb.com/)
 
+## Frontend Architecture
+- Build the frontend as a Single Page Application (SPA)
+- Use the backend as an API-only service for authentication and quiz data
+- Prefer storing JWT tokens outside of cookies and sending them in the `Authorization` header
+- Protect the app against XSS by keeping tokens in safe client storage, avoiding insecure script injection, and using secure coding patterns
+
 ---
 
 ## Phase 1: Project Setup & Infrastructure
@@ -42,7 +48,7 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
   - `symfony/phpunit-bridge`
   - `dama/doctrine-test-bundle`
 - Configure database connection in `.env`
-- Set up CORS for React frontend
+- Set up CORS for React frontend, allowing the React origin and the `Authorization` header for bearer tokens
 - Configure JWT authentication
 
 ### 1.3 React Frontend Setup
@@ -168,8 +174,9 @@ Create the following entities:
   - Access control
   - Role hierarchy
 - Add authentication middleware
+- Allow unauthenticated access to the `/api/health` endpoint for readiness/liveness checks
 - Implement rate limiting for API endpoints (e.g., registration, authentication, game actions) using Symfony's rate limiter to prevent abuse.
-- Implement CSRF protection on all state-changing endpoints (registration, login, game creation, answer submission, profile updates) using Symfony's CSRF token system.
+- Protect JWT-based API endpoints with standard authentication and authorization checks rather than CSRF tokens, since the app uses `Authorization` header bearer tokens instead of cookie-based auth.
 
 ### 3.3 User Profile Management
 - Create profile endpoint (`GET /api/profile`)
@@ -340,7 +347,7 @@ src/
 
 ### 7.3 API Service Layer
 - Create axios instance with base URL
-- Add request interceptor for JWT token
+- Add request interceptor for JWT token to attach bearer auth headers
 - Add response interceptor for error handling
 - Create authService with:
   - `register(username, password)`
