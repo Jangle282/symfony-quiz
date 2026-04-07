@@ -1,10 +1,14 @@
 framework:
     rate_limiter:
-        api_auth:
+        api_login:
             policy: fixed_window
-            limit: 10
+            limit: 5
             interval: '1 minute'
         api_registration:
             policy: fixed_window
-            limit: 5
+            limit: 50
+            interval: '1 minute'
+        api_general:
+            policy: fixed_window
+            limit: 120
             interval: '1 minute'

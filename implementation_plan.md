@@ -151,52 +151,66 @@ Create the following entities:
 ## Phase 3: Backend - Authentication & Authorization
 
 ### 3.1 User Authentication
+- Implement `/api/health` endpoint for readiness/liveness checks
+  - The route is unauthenticated
+  - returns a success response
+  - create a feature test class and set up basis for later test classes
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
   - Validate password strength (minimum 10 characters, mix of letters, numbers, symbols)
   - Hash password with bcrypt
   - Return user data (without password)
+  - The route is unauthenticated
+  - Create dedicated feature test class 
 - Implement login endpoint (`POST /api/login`)
   - Validate credentials
   - Generate JWT token
   - Return token and user data
+  - The route is unauthenticated
+  - Create dedicated feature test class 
 - Implement logout endpoint (`POST /api/logout`)
   - Invalidate token (if using token blacklist)
+  - Create dedicated feature test class 
 - Implement token refresh endpoint (`POST /api/token/refresh`)
+  - The route is authenticated
+  - Create dedicated feature test class 
 
 ### 3.2 Authorization & Security
 - Create Voter for Game resource
   - Check user is a participant in the game
-- Create Voter for User profile
-  - Check user can only access own profile
+- Create Voter for User
+  - Check user can only access own data
 - Configure security.yaml with:
   - Firewall rules
   - Access control
   - Role hierarchy
 - Add authentication middleware
-- Allow unauthenticated access to the `/api/health` endpoint for readiness/liveness checks
 - Implement rate limiting for API endpoints (e.g., registration, authentication, game actions) using Symfony's rate limiter to prevent abuse.
 - Protect JWT-based API endpoints with standard authentication and authorization checks rather than CSRF tokens, since the app uses `Authorization` header bearer tokens instead of cookie-based auth.
 
-### 3.3 User Profile Management
-- Create profile endpoint (`GET /api/profile`)
+### 3.3 User Management
+- Create get user endpoint (`GET /api/user/{user_id}`)
   - Return user data
   - Return games participated in (via UserGame)
-  - Users can only see their own profiles
-- Update username endpoint (`PATCH /api/profile/username`)
+  - Users can only see their own information
+  - Create dedicated feature test class 
+- Update username endpoint (`PATCH /api/user/{user_id}/username`)
   - Validate uniqueness
   - Update user
   - Users can only update their own username
-- Update password endpoint (`PATCH /api/profile/password`)
+  - Create dedicated feature test class 
+- Update password endpoint (`PATCH /api/user/{user_id}/password`)
   - Validate old password
   - Validate new password strength
   - Hash new password
   - Update user
   - Users can only update their own password
+  - Create dedicated feature test class 
 - Delete game endpoint (`DELETE /api/games/{id}`)
   - Check user is host of the game
   - Soft delete or hard delete game
   - Users can only delete their own games
+  - Create dedicated feature test class 
 
 ---
 
@@ -293,7 +307,7 @@ Create abstraction layer for question sources:
 - Test game creation and question fetching
 - Test answer submission and scoring
 - Test game completion
-- Test profile management
+- Test user management
 - Test authorization voters
 
 ### 6.3 API Tests
@@ -341,7 +355,7 @@ src/
   - `/lobby` - Lobby (protected)
   - `/game/:id` - Game play (protected)
   - `/results/:id` - Results (protected)
-  - `/profile` - User profile (protected)
+  - `/user` - User profile (protected)
 - Create ProtectedRoute component
 - Implement redirect logic for unauthenticated users
 
@@ -362,8 +376,8 @@ src/
   - `completeGame(gameId)`
   - `deleteGame(gameId)`
   - `getResults(gameId)`
-- Create profileService with:
-  - `getProfile()`
+- Create userService with:
+  - `getUser()`
   - `updateUsername(username)`
   - `updatePassword(oldPassword, newPassword)`
   - `deleteGame(gameId)`

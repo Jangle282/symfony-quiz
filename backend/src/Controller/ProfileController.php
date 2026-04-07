@@ -6,23 +6,39 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Csrf\CsrfToken;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[Route('/api/profile')]
+#[Route('/api/user')]
 class ProfileController extends AbstractController
 {
-    #[Route('', name: 'api_profile', methods: ['GET'])]
-    public function profile(): JsonResponse
+    public function __construct(
+        #[Autowire(service: 'limiter.api_general')] private RateLimiterFactory $generalLimiter,
+    ) {
+    }
+
+    #[Route('/{id}', name: 'api_profile', methods: ['GET'])]
+    public function profile(Request $request, string $id, UserRepository $userRepository): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
+        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
+        $limit = $limiter->consume();
+        if (!$limit->isAccepted()) {
+            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $authenticatedUser = $this->getUser();
+        if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user = $userRepository->find($id);
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
         }
 
         $this->denyAccessUnlessGranted('USER_VIEW', $user);
@@ -57,22 +73,32 @@ class ProfileController extends AbstractController
         ]);
     }
 
-    #[Route('/username', name: 'api_profile_update_username', methods: ['PATCH'])]
+    #[Route('/{id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
     public function updateUsername(
         Request $request,
+        string $id,
         UserRepository $userRepository,
-        EntityManagerInterface $entityManager,
-        CsrfTokenManagerInterface $csrfTokenManager
+        EntityManagerInterface $entityManager
     ): JsonResponse {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
+        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
+        $limit = $limiter->consume();
+        if (!$limit->isAccepted()) {
+            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $authenticatedUser = $this->getUser();
+        if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user = $userRepository->find($id);
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
         }
 
         $this->denyAccessUnlessGranted('USER_UPDATE', $user);
 
         $data = $this->getJsonBody($request);
-        $this->validateCsrfToken($request, 'profile_username', $csrfTokenManager, $data);
 
         $newUsername = trim((string) ($data['username'] ?? ''));
         if ($newUsername === '') {
@@ -98,22 +124,33 @@ class ProfileController extends AbstractController
         ]);
     }
 
-    #[Route('/password', name: 'api_profile_update_password', methods: ['PATCH'])]
+    #[Route('/{id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
     public function updatePassword(
         Request $request,
+        string $id,
+        UserRepository $userRepository,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher,
-        CsrfTokenManagerInterface $csrfTokenManager
+        UserPasswordHasherInterface $passwordHasher
     ): JsonResponse {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
+        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
+        $limit = $limiter->consume();
+        if (!$limit->isAccepted()) {
+            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $authenticatedUser = $this->getUser();
+        if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user = $userRepository->find($id);
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
         }
 
         $this->denyAccessUnlessGranted('USER_UPDATE', $user);
 
         $data = $this->getJsonBody($request);
-        $this->validateCsrfToken($request, 'profile_password', $csrfTokenManager, $data);
 
         $currentPassword = (string) ($data['current_password'] ?? '');
         $newPassword = (string) ($data['new_password'] ?? '');
@@ -139,14 +176,6 @@ class ProfileController extends AbstractController
             return $request->toArray();
         } catch (\Throwable) {
             return [];
-        }
-    }
-
-    private function validateCsrfToken(Request $request, string $intention, CsrfTokenManagerInterface $csrfTokenManager, array $body = []): void
-    {
-        $tokenValue = $request->headers->get('X-CSRF-Token') ?? $body['csrf_token'] ?? '';
-        if (!$csrfTokenManager->isTokenValid(new CsrfToken($intention, $tokenValue))) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
     }
 }

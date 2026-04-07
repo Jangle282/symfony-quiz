@@ -4,7 +4,7 @@ namespace App\Tests\Controller\Auth;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class AuthControllerTest extends WebTestCase
+class RegisterControllerTest extends WebTestCase
 {
     public function testRegisterCreatesNewUser(): void
     {

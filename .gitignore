@@ -28,3 +28,6 @@ Thumbs.db
 
 # Github
 /.github/*
+
+# local stuff
+notes.txt

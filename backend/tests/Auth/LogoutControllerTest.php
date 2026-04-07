@@ -1,39 +1,32 @@
 <?php
 
-namespace App\Tests\Controller\Auth;
+namespace App\Tests\Auth;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class RefreshControllerTest extends WebTestCase
+class LogoutControllerTest extends WebTestCase
 {
-    public function testRefreshReturnsNewTokenForAuthenticatedUser(): void
+    public function testLogoutReturnsNoContentForAuthenticatedUser(): void
     {
         $client = static::createClient();
         $token = $this->registerAndLogin($client);
 
         $client->request(
             'POST',
-            '/api/token/refresh',
+            '/api/logout',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer ' . $token]
         );
 
-        $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderSame('content-type', 'application/json');
-
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
-        $this->assertIsArray($data);
-        $this->assertArrayHasKey('token', $data);
-        $this->assertArrayHasKey('user', $data);
-        $this->assertIsString($data['token']);
+        $this->assertResponseStatusCodeSame(204);
     }
 
-    public function testRefreshReturnsUnauthorizedWithoutToken(): void
+    public function testLogoutReturnsUnauthorizedWithoutToken(): void
     {
         $client = static::createClient();
 
-        $client->request('POST', '/api/token/refresh');
+        $client->request('POST', '/api/logout');
 
         $this->assertResponseStatusCodeSame(401);
     }

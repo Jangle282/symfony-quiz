@@ -21,7 +21,7 @@ class AuthController extends AbstractController
     public function __construct(
         private UserPasswordHasherInterface $passwordHasher,
         private JWTTokenManagerInterface $jwtManager,
-        #[Autowire(service: 'limiter.api_auth')] private RateLimiterFactory $authLimiter,
+        #[Autowire(service: 'limiter.api_login')] private RateLimiterFactory $loginLimiter,
         #[Autowire(service: 'limiter.api_registration')] private RateLimiterFactory $registrationLimiter,
     ) {
     }
@@ -74,7 +74,7 @@ class AuthController extends AbstractController
     ): JsonResponse {
         $data = $this->getJsonBody($request);
 
-        $limiter = $this->authLimiter->create($request->getClientIp() ?? 'anonymous');
+        $limiter = $this->loginLimiter->create($request->getClientIp() ?? 'anonymous');
         $limit = $limiter->consume();
         if (!$limit->isAccepted()) {
             return $this->json(['error' => 'Too many login attempts, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
