@@ -98,7 +98,7 @@ class AuthController extends AbstractController
     }
 
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]
-    public function logout(EntityManagerInterface $entityManager, RefreshTokenRepository $refreshTokenRepository): JsonResponse
+    public function logout(RefreshTokenRepository $refreshTokenRepository): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
