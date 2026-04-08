@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\RefreshToken;
 use App\Repository\UserRepository;
+use App\Repository\RefreshTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -70,7 +72,8 @@ class AuthController extends AbstractController
     #[Route('/login', name: 'api_login', methods: ['POST'])]
     public function login(
         Request $request,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager
     ): JsonResponse {
         $data = $this->getJsonBody($request);
 
@@ -90,34 +93,73 @@ class AuthController extends AbstractController
 
         $token = $this->jwtManager->create($user);
 
+        // create a refresh token (rotating, stored server-side)
+        $refreshToken = new RefreshToken();
+        $refreshToken->setUser($user);
+        $refreshToken->setToken(bin2hex(random_bytes(64)));
+        $refreshToken->setExpiresAt(new \DateTimeImmutable('+30 days'));
+        $refreshToken->setRevoked(false);
+
+        $entityManager->persist($refreshToken);
+        $entityManager->flush();
+
         return $this->json([
             'token' => $token,
+            'refresh_token' => $refreshToken->getToken(),
             'user' => $this->serializeUser($user),
         ]);
     }
 
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]
-    public function logout(): JsonResponse
+    public function logout(EntityManagerInterface $entityManager, RefreshTokenRepository $refreshTokenRepository): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
+
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $refreshTokenRepository->revokeAllForUser($user);
+        }
 
         return $this->json([], Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/token/refresh', name: 'api_token_refresh', methods: ['POST'])]
-    public function refresh(): JsonResponse
+    public function refresh(Request $request, RefreshTokenRepository $refreshTokenRepository, EntityManagerInterface $entityManager): JsonResponse
     {
-        $this->denyAccessUnlessGranted('ROLE_USER');
+        $data = $this->getJsonBody($request);
+        $tokenString = (string) ($data['refresh_token'] ?? '');
+        if ($tokenString === '') {
+            return $this->json(['error' => 'Refresh token is required.'], Response::HTTP_BAD_REQUEST);
+        }
 
-        $user = $this->getUser();
+        $refreshToken = $refreshTokenRepository->findOneByToken($tokenString);
+        if (!$refreshToken instanceof RefreshToken || $refreshToken->isRevoked() || $refreshToken->isExpired()) {
+            return $this->json(['error' => 'Invalid or expired refresh token.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user = $refreshToken->getUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unable to refresh token.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $token = $this->jwtManager->create($user);
+        // rotate: revoke old refresh token and issue a new one
+        $refreshToken->setRevoked(true);
+
+        $newRefreshToken = new RefreshToken();
+        $newRefreshToken->setUser($user);
+        $newRefreshToken->setToken(bin2hex(random_bytes(64)));
+        $newRefreshToken->setExpiresAt(new \DateTimeImmutable('+30 days'));
+        $newRefreshToken->setRevoked(false);
+
+        $entityManager->persist($refreshToken);
+        $entityManager->persist($newRefreshToken);
+        $entityManager->flush();
+
+        $accessToken = $this->jwtManager->create($user);
 
         return $this->json([
-            'token' => $token,
+            'token' => $accessToken,
+            'refresh_token' => $newRefreshToken->getToken(),
             'user' => $this->serializeUser($user),
         ]);
     }

@@ -164,8 +164,8 @@ Create the following entities:
   - Create dedicated feature test class 
 - Implement login endpoint (`POST /api/login`)
   - Validate credentials
-  - Generate JWT token
-  - Return token and user data
+  - Generate JWT token and refresh token
+  - Return tokens
   - The route is unauthenticated
   - Create dedicated feature test class 
 - Implement logout endpoint (`POST /api/logout`)
@@ -173,6 +173,7 @@ Create the following entities:
   - Create dedicated feature test class 
 - Implement token refresh endpoint (`POST /api/token/refresh`)
   - The route is authenticated
+  - revokes all refresh tokens
   - Create dedicated feature test class 
 
 ### 3.2 Authorization & Security

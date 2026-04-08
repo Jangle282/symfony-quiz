@@ -9,7 +9,8 @@ class LogoutControllerTest extends WebTestCase
     public function testLogoutReturnsNoContentForAuthenticatedUser(): void
     {
         $client = static::createClient();
-        $token = $this->registerAndLogin($client);
+        $creds = $this->registerAndLogin($client);
+        $token = $creds['token'];
 
         $client->request(
             'POST',
@@ -57,6 +58,6 @@ class LogoutControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true);
-        return $data['token'];
+        return ['token' => $data['token'], 'refresh_token' => $data['refresh_token']];
     }
 }
