@@ -15,7 +15,7 @@ security:
             security: false
 
         api_public:
-            pattern: ^/api/(register|login|token/refresh|csrf-token|health)
+            pattern: ^/api/(register|login|token/refresh|health)
             security: false
 
         main:
