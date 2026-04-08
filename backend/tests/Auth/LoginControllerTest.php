@@ -4,7 +4,6 @@ namespace App\Tests\Auth;
 
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class LoginControllerTest extends ApiTestCase
 {
@@ -83,5 +82,28 @@ class LoginControllerTest extends ApiTestCase
         $this->assertArrayHasKey('token', $data);
         $this->assertArrayHasKey('user', $data);
         $this->assertSame($user->getUsername(), $data['user']['username']);
+    }
+
+    public function testLoginThrottlesAfterTooManyAttempts(): void
+    {
+        $this->consumeRateLimiter('api_login', 5);
+
+        $this->client->request(
+            'POST',
+            '/api/login',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            json_encode([
+                'username' => 'any_user',
+                'password' => 'anyPassword123!',
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(429);
+
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
+        $this->assertIsArray($data);
+        $this->assertSame('Too many login attempts, please try again later.', $data['error']);
     }
 }

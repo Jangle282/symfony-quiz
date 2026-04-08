@@ -7,7 +7,6 @@ use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
 use App\Tests\Trait\AuthenticatesUsers;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ProfileControllerTest extends ApiTestCase
 {

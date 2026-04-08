@@ -3,7 +3,6 @@
 namespace App\Tests\Health;
 
 use App\Tests\ApiTestCase;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class HealthControllerTest extends ApiTestCase
 {
@@ -11,7 +10,7 @@ class HealthControllerTest extends ApiTestCase
     {
         parent::setUp();
     }
-    
+
     public function testHealthEndpointReturnsOk(): void
     {
         $this->client->request('GET', '/api/health');

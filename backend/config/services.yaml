@@ -22,3 +22,10 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\EventListener\RateLimitListener:
+        arguments:
+            $rateLimiters: !service_locator
+                api_login: '@limiter.api_login'
+                api_registration: '@limiter.api_registration'
+                api_general: '@limiter.api_general'

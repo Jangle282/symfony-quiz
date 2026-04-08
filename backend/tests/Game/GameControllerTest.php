@@ -7,7 +7,6 @@ use App\Tests\ApiTestCase;
 use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class GameControllerTest extends ApiTestCase
 {

@@ -2,35 +2,24 @@
 
 namespace App\Controller;
 
+use App\Attribute\RateLimited;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api/user')]
 class ProfileController extends AbstractController
 {
-    public function __construct(
-        #[Autowire(service: 'limiter.api_general')] private RateLimiterFactory $generalLimiter,
-    ) {
-    }
-
     #[Route('/{id}', name: 'api_profile', methods: ['GET'])]
+    #[RateLimited('api_general')]
     public function profile(Request $request, string $id, UserRepository $userRepository): JsonResponse
     {
-        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
-        $limit = $limiter->consume();
-        if (!$limit->isAccepted()) {
-            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
         $authenticatedUser = $this->getUser();
         if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
@@ -74,18 +63,13 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/{id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
+    #[RateLimited('api_general')]
     public function updateUsername(
         Request $request,
         string $id,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
-        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
-        $limit = $limiter->consume();
-        if (!$limit->isAccepted()) {
-            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
         $authenticatedUser = $this->getUser();
         if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
@@ -125,6 +109,7 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/{id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
+    #[RateLimited('api_general')]
     public function updatePassword(
         Request $request,
         string $id,
@@ -132,12 +117,6 @@ class ProfileController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher
     ): JsonResponse {
-        $limiter = $this->generalLimiter->create($request->getClientIp() ?? 'anonymous');
-        $limit = $limiter->consume();
-        if (!$limit->isAccepted()) {
-            return $this->json(['error' => 'Too many requests, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
         $authenticatedUser = $this->getUser();
         if (!$authenticatedUser instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);

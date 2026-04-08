@@ -5,7 +5,6 @@ namespace App\Tests\Auth;
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class LogoutControllerTest extends ApiTestCase
 {

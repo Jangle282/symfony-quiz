@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Attribute\RateLimited;
 use App\Entity\User;
 use App\Entity\RefreshToken;
 use App\Repository\UserRepository;
@@ -9,11 +10,9 @@ use App\Repository\RefreshTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -23,24 +22,17 @@ class AuthController extends AbstractController
     public function __construct(
         private UserPasswordHasherInterface $passwordHasher,
         private JWTTokenManagerInterface $jwtManager,
-        #[Autowire(service: 'limiter.api_login')] private RateLimiterFactory $loginLimiter,
-        #[Autowire(service: 'limiter.api_registration')] private RateLimiterFactory $registrationLimiter,
     ) {
     }
 
     #[Route('/register', name: 'api_register', methods: ['POST'])]
+    #[RateLimited('api_registration', message: 'Too many registration attempts, please try again later.')]
     public function register(
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $data = $this->getJsonBody($request);
-
-        $limiter = $this->registrationLimiter->create($request->getClientIp() ?? 'anonymous');
-        $limit = $limiter->consume();
-        if (!$limit->isAccepted()) {
-            return $this->json(['error' => 'Too many registration attempts, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
 
         $username = trim((string) ($data['username'] ?? ''));
         $password = (string) ($data['password'] ?? '');
@@ -70,18 +62,13 @@ class AuthController extends AbstractController
     }
 
     #[Route('/login', name: 'api_login', methods: ['POST'])]
+    #[RateLimited('api_login', message: 'Too many login attempts, please try again later.')]
     public function login(
         Request $request,
         UserRepository $userRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $data = $this->getJsonBody($request);
-
-        $limiter = $this->loginLimiter->create($request->getClientIp() ?? 'anonymous');
-        $limit = $limiter->consume();
-        if (!$limit->isAccepted()) {
-            return $this->json(['error' => 'Too many login attempts, please try again later.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
 
         $username = trim((string) ($data['username'] ?? ''));
         $password = (string) ($data['password'] ?? '');

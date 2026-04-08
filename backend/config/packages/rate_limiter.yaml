@@ -12,3 +12,15 @@ framework:
             policy: fixed_window
             limit: 120
             interval: '1 minute'
+
+when@test:
+    framework:
+        rate_limiter:
+            api_login:
+                cache_pool: cache.app
+            api_registration:
+                cache_pool: cache.app
+            api_general:
+                cache_pool: cache.app
+        cache:
+            app: cache.adapter.array

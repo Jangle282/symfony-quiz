@@ -4,7 +4,6 @@ namespace App\Tests\Controller\Auth;
 
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class RegisterControllerTest extends ApiTestCase
 {

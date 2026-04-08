@@ -5,7 +5,6 @@ namespace App\Tests\Auth;
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\RefreshTokenFactory;
 use App\Tests\Factory\UserFactory;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class RefreshControllerTest extends ApiTestCase
 {
