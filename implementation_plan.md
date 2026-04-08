@@ -150,11 +150,15 @@ Create the following entities:
 
 ## Phase 3: Backend - Authentication & Authorization
 
-### 3.1 User Authentication
+### 3.1 Health endpoint and test set up
 - Implement `/api/health` endpoint for readiness/liveness checks
   - The route is unauthenticated
   - returns a success response
-  - create a feature test class and set up basis for later test classes
+  - research the best practice foundations setting up tests for the given programming language and framework in VScode. 
+  - ensure tests can be run inside the docker container directly from VScode UI 'run' buttons.
+  - create a feature test class for the health endpoint
+
+### 3.2 User Authentication
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
   - Validate password strength (minimum 10 characters, mix of letters, numbers, symbols)
@@ -170,13 +174,13 @@ Create the following entities:
   - Create dedicated feature test class 
 - Implement logout endpoint (`POST /api/logout`)
   - Invalidate token (if using token blacklist)
-  - Create dedicated feature test class 
+  - Create dedicated feature test class
 - Implement token refresh endpoint (`POST /api/token/refresh`)
-  - The route is authenticated
+  - The route is unauthenticated
   - revokes all refresh tokens
   - Create dedicated feature test class 
 
-### 3.2 Authorization & Security
+### 3.3 Authorization & Security
 - Create Voter for Game resource
   - Check user is a participant in the game
 - Create Voter for User
@@ -189,7 +193,7 @@ Create the following entities:
 - Implement rate limiting for API endpoints (e.g., registration, authentication, game actions) using Symfony's rate limiter to prevent abuse.
 - Protect JWT-based API endpoints with standard authentication and authorization checks rather than CSRF tokens, since the app uses `Authorization` header bearer tokens instead of cookie-based auth.
 
-### 3.3 User Management
+### 3.4 User Management
 - Create get user endpoint (`GET /api/user/{user_id}`)
   - Return user data
   - Return games participated in (via UserGame)

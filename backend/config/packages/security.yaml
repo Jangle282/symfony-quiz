@@ -15,7 +15,7 @@ security:
             security: false
 
         api_public:
-            pattern: ^/api/(register|login|csrf-token|health)
+            pattern: ^/api/(register|login|token/refresh|csrf-token|health)
             security: false
 
         main:
@@ -25,7 +25,6 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/token/refresh, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
     role_hierarchy:

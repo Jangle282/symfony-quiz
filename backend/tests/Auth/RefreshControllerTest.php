@@ -2,6 +2,8 @@
 
 namespace App\Tests\Auth;
 
+use App\Tests\Factory\RefreshTokenFactory;
+use App\Tests\Factory\UserFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class RefreshControllerTest extends WebTestCase
@@ -9,14 +11,17 @@ class RefreshControllerTest extends WebTestCase
     public function testRefreshReturnsNewTokenForAuthenticatedUser(): void
     {
         $client = static::createClient();
-        $token = $this->registerAndLogin($client);
+
+        $user = UserFactory::createOne();
+        $refreshToken = RefreshTokenFactory::createOne(['user' => $user]);
 
         $client->request(
             'POST',
             '/api/token/refresh',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer ' . $token]
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            json_encode(['refresh_token' => $refreshToken->getToken()])
         );
 
         $this->assertResponseIsSuccessful();
@@ -25,45 +30,18 @@ class RefreshControllerTest extends WebTestCase
         $data = json_decode($client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('token', $data);
+        $this->assertArrayHasKey('refresh_token', $data);
         $this->assertArrayHasKey('user', $data);
         $this->assertIsString($data['token']);
+        $this->assertIsString($data['refresh_token']);
     }
 
-    public function testRefreshReturnsUnauthorizedWithoutToken(): void
+    public function testRefreshReturnsBadRequestWithoutToken(): void
     {
         $client = static::createClient();
 
         $client->request('POST', '/api/token/refresh');
 
-        $this->assertResponseStatusCodeSame(401);
-    }
-
-    private function registerAndLogin($client): string
-    {
-        $username = 'user_' . bin2hex(random_bytes(6));
-        $password = 'Str0ngP@ssw0rd!';
-
-        $client->request(
-            'POST',
-            '/api/register',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
-            json_encode(['username' => $username, 'password' => $password])
-        );
-        $this->assertResponseStatusCodeSame(201);
-
-        $client->request(
-            'POST',
-            '/api/login',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
-            json_encode(['username' => $username, 'password' => $password])
-        );
-        $this->assertResponseIsSuccessful();
-
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
-        return $data['token'];
+        $this->assertResponseStatusCodeSame(400);
     }
 }

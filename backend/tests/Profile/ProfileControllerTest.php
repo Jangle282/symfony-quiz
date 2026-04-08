@@ -2,65 +2,35 @@
 
 namespace App\Tests\Profile;
 
-use App\Entity\Game;
-use App\Entity\User;
-use App\Entity\UserGame;
+use App\Tests\Factory\GameFactory;
+use App\Tests\Factory\UserFactory;
+use App\Tests\Factory\UserGameFactory;
+use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class ProfileControllerTest extends WebTestCase
 {
+    use AuthenticatesUsers;
+
     public function testGetProfileReturnsUserData(): void
     {
         $client = static::createClient();
-        
-        $container = self::getContainer();
-        $entityManager = $container->get('doctrine.orm.entity_manager');
-        $passwordHasher = $container->get('security.password_hasher');
-        $jwtManager = $container->get('lexik_jwt_authentication.jwt_manager');
 
-        // Create a test user
-        $username = 'test_user_' . bin2hex(random_bytes(6));
-        $password = 'TestPassword123!';
+        $user = UserFactory::createOne();
+        $game = GameFactory::createOne([
+            'createdBy' => $user,
+            'totalScore' => 85,
+            'totalQuestions' => 10,
+            'completedAt' => new \DateTimeImmutable(),
+            'saved' => true,
+        ]);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'owner']);
 
-        $user = new User();
-        $user->setUsername($username);
-        $user->setPassword($passwordHasher->hashPassword($user, $password));
-        $user->setCreatedAt(new \DateTimeImmutable());
-        $user->setUpdatedAt(new \DateTimeImmutable());
+        $token = $this->generateToken($user);
 
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        // Create a game for the user
-        $game = new Game();
-        $game->setCreatedBy($user);
-        $game->setTotalScore(85);
-        $game->setTotalQuestions(10);
-        $game->setStartedAt(new \DateTimeImmutable());
-        $game->setCompletedAt(new \DateTimeImmutable());
-        $game->setSaved(true);
-        $game->setCreatedAt(new \DateTimeImmutable());
-
-        $entityManager->persist($game);
-        $entityManager->flush();
-
-        // Create UserGame association
-        $userGame = new UserGame();
-        $userGame->setUser($user);
-        $userGame->setGame($game);
-        $userGame->setRole('owner');
-
-        $entityManager->persist($userGame);
-        $entityManager->flush();
-        $entityManager->clear();
-
-        // Fetch user and create token
-        $user = $entityManager->getRepository(User::class)->findOneByUsername($username);
-        $userId = (string) $user->getId();
-        $token = $jwtManager->create($user);
         $client->request(
             'GET',
-            '/api/user/' . $userId,
+            '/api/user/' . $user->getId(),
             [],
             [],
             [
@@ -77,12 +47,11 @@ class ProfileControllerTest extends WebTestCase
         $this->assertIsArray($data);
         $this->assertArrayHasKey('user', $data);
         $this->assertArrayHasKey('games', $data);
-        $this->assertSame($username, $data['user']['username']);
+        $this->assertSame($user->getUsername(), $data['user']['username']);
         $this->assertArrayHasKey('id', $data['user']);
         $this->assertArrayHasKey('createdAt', $data['user']);
         $this->assertArrayHasKey('updatedAt', $data['user']);
         
-        // Assert game is included
         $this->assertIsArray($data['games']);
         $this->assertCount(1, $data['games']);
         
@@ -139,71 +108,19 @@ class ProfileControllerTest extends WebTestCase
     public function testUsersCannotRetrieveEachOthersProfiles(): void
     {
         $client = static::createClient();
-        
-        $container = self::getContainer();
-        $entityManager = $container->get('doctrine.orm.entity_manager');
-        $passwordHasher = $container->get('security.password_hasher');
-        $jwtManager = $container->get('lexik_jwt_authentication.jwt_manager');
 
-        // Create first user with a game
-        $username1 = 'user_' . bin2hex(random_bytes(6));
-        $password1 = 'TestPassword123!';
+        $user1 = UserFactory::createOne();
+        $user2 = UserFactory::createOne();
 
-        $user1 = new User();
-        $user1->setUsername($username1);
-        $user1->setPassword($passwordHasher->hashPassword($user1, $password1));
-        $user1->setCreatedAt(new \DateTimeImmutable());
-        $user1->setUpdatedAt(new \DateTimeImmutable());
+        $game = GameFactory::createOne(['createdBy' => $user1, 'saved' => true]);
+        UserGameFactory::createOne(['user' => $user1, 'game' => $game, 'role' => 'owner']);
 
-        // Create second user without games
-        $username2 = 'user_' . bin2hex(random_bytes(6));
-        $password2 = 'TestPassword456!';
+        $token1 = $this->generateToken($user1);
+        $token2 = $this->generateToken($user2);
 
-        $user2 = new User();
-        $user2->setUsername($username2);
-        $user2->setPassword($passwordHasher->hashPassword($user2, $password2));
-        $user2->setCreatedAt(new \DateTimeImmutable());
-        $user2->setUpdatedAt(new \DateTimeImmutable());
-
-        $entityManager->persist($user1);
-        $entityManager->persist($user2);
-        $entityManager->flush();
-
-        // Create a game for user1 only
-        $game = new Game();
-        $game->setCreatedBy($user1);
-        $game->setTotalScore(75);
-        $game->setTotalQuestions(10);
-        $game->setStartedAt(new \DateTimeImmutable());
-        $game->setSaved(true);
-        $game->setCreatedAt(new \DateTimeImmutable());
-
-        $entityManager->persist($game);
-        $entityManager->flush();
-
-        // Create UserGame association for user1
-        $userGame = new UserGame();
-        $userGame->setUser($user1);
-        $userGame->setGame($game);
-        $userGame->setRole('owner');
-
-        $entityManager->persist($userGame);
-        $entityManager->flush();
-        $entityManager->clear();
-
-        // Get tokens for both users
-        $user1 = $entityManager->getRepository(User::class)->findOneByUsername($username1);
-        $user1Id = (string) $user1->getId();
-        $token1 = $jwtManager->create($user1);
-
-        $user2 = $entityManager->getRepository(User::class)->findOneByUsername($username2);
-        $user2Id = (string) $user2->getId();
-        $token2 = $jwtManager->create($user2);
-
-        // User1 should see their own profile with their game
         $client->request(
             'GET',
-            '/api/user/' . $user1Id,
+            '/api/user/' . $user1->getId(),
             [],
             [],
             [
@@ -215,13 +132,12 @@ class ProfileControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $data1 = json_decode($client->getResponse()->getContent() ?: '', true);
-        $this->assertSame($username1, $data1['user']['username']);
+        $this->assertSame($user1->getUsername(), $data1['user']['username']);
         $this->assertCount(1, $data1['games']);
 
-        // User2 should see their own profile with no games
         $client->request(
             'GET',
-            '/api/user/' . $user2Id,
+            '/api/user/' . $user2->getId(),
             [],
             [],
             [
@@ -233,10 +149,9 @@ class ProfileControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
         $data2 = json_decode($client->getResponse()->getContent() ?: '', true);
-        $this->assertSame($username2, $data2['user']['username']);
+        $this->assertSame($user2->getUsername(), $data2['user']['username']);
         $this->assertCount(0, $data2['games']);
         
-        // Verify user2 cannot see user1's game
         $this->assertNotEquals($data1['user']['id'], $data2['user']['id']);
     }
 }

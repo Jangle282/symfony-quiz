@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller\Auth;
 
+use App\Tests\Factory\UserFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class RegisterControllerTest extends WebTestCase
@@ -38,18 +39,13 @@ class RegisterControllerTest extends WebTestCase
     public function testRegisterReturnsConflictForDuplicateUsername(): void
     {
         $client = static::createClient();
-        $username = 'duplicate_' . bin2hex(random_bytes(6));
-        $password = 'Str0ngP@ssw0rd!';
 
-        $payload = json_encode([
-            'username' => $username,
-            'password' => $password,
-        ]);
+        $existingUser = UserFactory::createOne();
 
-        $client->request('POST', '/api/register', [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], $payload);
-        $this->assertResponseStatusCodeSame(201);
-
-        $client->request('POST', '/api/register', [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], $payload);
+        $client->request('POST', '/api/register', [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'], json_encode([
+            'username' => $existingUser->getUsername(),
+            'password' => 'Str0ngP@ssw0rd!',
+        ]));
         $this->assertResponseStatusCodeSame(409);
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true);

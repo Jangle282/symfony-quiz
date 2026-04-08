@@ -27,7 +27,7 @@ class RefreshTokenRepository extends ServiceEntityRepository
      */
     public function revokeAllForUser(User $user): int
     {
-        $qb = $this->_em->createQueryBuilder()
+        $qb = $this->getEntityManager()->createQueryBuilder()
             ->update(RefreshToken::class, 'r')
             ->set('r.revoked', 'true')
             ->where('r.user = :user')

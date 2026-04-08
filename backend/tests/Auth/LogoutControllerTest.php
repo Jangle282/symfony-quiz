@@ -2,15 +2,20 @@
 
 namespace App\Tests\Auth;
 
+use App\Tests\Factory\UserFactory;
+use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class LogoutControllerTest extends WebTestCase
 {
+    use AuthenticatesUsers;
+
     public function testLogoutReturnsNoContentForAuthenticatedUser(): void
     {
         $client = static::createClient();
-        $creds = $this->registerAndLogin($client);
-        $token = $creds['token'];
+
+        $user = UserFactory::createOne();
+        $token = $this->generateToken($user);
 
         $client->request(
             'POST',
@@ -30,34 +35,9 @@ class LogoutControllerTest extends WebTestCase
         $client->request('POST', '/api/logout');
 
         $this->assertResponseStatusCodeSame(401);
-    }
-
-    private function registerAndLogin($client): string
-    {
-        $username = 'user_' . bin2hex(random_bytes(6));
-        $password = 'Str0ngP@ssw0rd!';
-
-        $client->request(
-            'POST',
-            '/api/register',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
-            json_encode(['username' => $username, 'password' => $password])
-        );
-        $this->assertResponseStatusCodeSame(201);
-
-        $client->request(
-            'POST',
-            '/api/login',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
-            json_encode(['username' => $username, 'password' => $password])
-        );
-        $this->assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true);
-        return ['token' => $data['token'], 'refresh_token' => $data['refresh_token']];
+        $this->assertArrayNotHasKey('token', $data);
+        $this->assertArrayNotHasKey('refresh_token', $data);
     }
 }
