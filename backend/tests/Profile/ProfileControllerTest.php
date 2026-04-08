@@ -108,32 +108,13 @@ class ProfileControllerTest extends ApiTestCase
         $user1 = UserFactory::createOne();
         $user2 = UserFactory::createOne();
 
-        $game = GameFactory::createOne(['createdBy' => $user1, 'saved' => true]);
-        UserGameFactory::createOne(['user' => $user1, 'game' => $game, 'role' => 'owner']);
-
         $token1 = $this->generateToken($user1);
         $token2 = $this->generateToken($user2);
 
+        // user2 attempts to access user1's profile — must be denied
         $this->client->request(
             'GET',
             '/api/user/' . $user1->getId(),
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-                'HTTP_ACCEPT' => 'application/json',
-                'HTTP_AUTHORIZATION' => 'Bearer ' . $token1,
-            ]
-        );
-
-        $this->assertResponseIsSuccessful();
-        $data1 = json_decode($this->client->getResponse()->getContent() ?: '', true);
-        $this->assertSame($user1->getUsername(), $data1['user']['username']);
-        $this->assertCount(1, $data1['games']);
-
-        $this->client->request(
-            'GET',
-            '/api/user/' . $user2->getId(),
             [],
             [],
             [
@@ -143,11 +124,21 @@ class ProfileControllerTest extends ApiTestCase
             ]
         );
 
-        $this->assertResponseIsSuccessful();
-        $data2 = json_decode($this->client->getResponse()->getContent() ?: '', true);
-        $this->assertSame($user2->getUsername(), $data2['user']['username']);
-        $this->assertCount(0, $data2['games']);
-        
-        $this->assertNotEquals($data1['user']['id'], $data2['user']['id']);
+        $this->assertResponseStatusCodeSame(403);
+
+        // user1 attempts to access user2's profile — must be denied
+        $this->client->request(
+            'GET',
+            '/api/user/' . $user2->getId(),
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $token1,
+            ]
+        );
+
+        $this->assertResponseStatusCodeSame(403);
     }
 }
