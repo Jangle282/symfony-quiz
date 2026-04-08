@@ -5,7 +5,6 @@ namespace App\Controller\Auth;
 use App\Entity\User;
 use App\Repository\RefreshTokenRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -13,7 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class LogoutController extends AbstractController
 {
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]
-    public function logout(RefreshTokenRepository $refreshTokenRepository): JsonResponse
+    public function logout(RefreshTokenRepository $refreshTokenRepository): Response
     {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
@@ -22,6 +21,6 @@ class LogoutController extends AbstractController
             $refreshTokenRepository->revokeAllForUser($user);
         }
 
-        return $this->json([], Response::HTTP_NO_CONTENT);
+        return new Response(null, Response::HTTP_NO_CONTENT);
     }
 }

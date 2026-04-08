@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Profile;
+namespace App\Tests\User;
 
 use App\Entity\User;
 use App\Tests\ApiTestCase;

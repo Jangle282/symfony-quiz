@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Profile;
+namespace App\Tests\User;
 
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\GameFactory;
