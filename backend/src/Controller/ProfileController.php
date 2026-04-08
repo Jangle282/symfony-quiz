@@ -90,7 +90,7 @@ class ProfileController extends AbstractController
         }
 
         $existingUser = $userRepository->findOneByUsername($newUsername);
-        if ($existingUser !== null && $existingUser->getId() !== $user->getId()) {
+        if ($existingUser !== null && (string) $existingUser->getId() !== (string) $user->getId()) {
             return $this->json(['error' => 'Username already exists.'], Response::HTTP_CONFLICT);
         }
 
