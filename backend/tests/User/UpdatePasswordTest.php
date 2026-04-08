@@ -7,7 +7,7 @@ use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 
-class UpdatePasswordControllerTest extends ApiTestCase
+class UpdatePasswordTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 

@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api/user')]
-class ProfileController extends AbstractController
+class UserController extends AbstractController
 {
     #[Route('/{id}', name: 'api_profile', methods: ['GET'])]
     #[RateLimited('api_general')]

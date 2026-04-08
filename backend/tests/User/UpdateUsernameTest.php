@@ -6,7 +6,7 @@ use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 
-class UpdateUsernameControllerTest extends ApiTestCase
+class UpdateUsernameTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 

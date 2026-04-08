@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller\Auth;
+namespace App\Tests\Auth;
 
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;

@@ -8,7 +8,7 @@ use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 
-class ProfileControllerTest extends ApiTestCase
+class GetUserTest extends ApiTestCase
 {
     use AuthenticatesUsers;
     public function setUp(): void  
