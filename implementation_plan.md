@@ -9,6 +9,12 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
 - **Infrastructure**: Docker & Docker Compose
 - **API**: Open Trivia Database (https://opentdb.com/)
 
+## Frontend Architecture
+- Build the frontend as a Single Page Application (SPA)
+- Use the backend as an API-only service for authentication and quiz data
+- Prefer storing JWT tokens outside of cookies and sending them in the `Authorization` header
+- Protect the app against XSS by keeping tokens in safe client storage, avoiding insecure script injection, and using secure coding patterns
+
 ---
 
 ## Phase 1: Project Setup & Infrastructure
@@ -42,7 +48,7 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
   - `symfony/phpunit-bridge`
   - `dama/doctrine-test-bundle`
 - Configure database connection in `.env`
-- Set up CORS for React frontend
+- Set up CORS for React frontend, allowing the React origin and the `Authorization` header for bearer tokens
 - Configure JWT authentication
 
 ### 1.3 React Frontend Setup
@@ -144,45 +150,72 @@ Create the following entities:
 
 ## Phase 3: Backend - Authentication & Authorization
 
-### 3.1 User Authentication
+### 3.1 Health endpoint and test set up
+- Implement `/api/health` endpoint for readiness/liveness checks
+  - The route is unauthenticated
+  - returns a success response
+  - research the best practice foundations setting up tests for the given programming language and framework in VScode. 
+  - ensure tests can be run inside the docker container directly from VScode UI 'run' buttons.
+  - create a feature test class for the health endpoint
+
+### 3.2 User Authentication
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
+  - Validate password strength (minimum 10 characters, mix of letters, numbers, symbols)
   - Hash password with bcrypt
   - Return user data (without password)
+  - The route is unauthenticated
+  - Create dedicated feature test class 
 - Implement login endpoint (`POST /api/login`)
   - Validate credentials
-  - Generate JWT token
-  - Return token and user data
+  - Generate JWT token and refresh token
+  - Return tokens
+  - The route is unauthenticated
+  - Create dedicated feature test class 
 - Implement logout endpoint (`POST /api/logout`)
   - Invalidate token (if using token blacklist)
+  - Create dedicated feature test class
 - Implement token refresh endpoint (`POST /api/token/refresh`)
+  - The route is unauthenticated
+  - revokes all refresh tokens
+  - Create dedicated feature test class 
 
-### 3.2 Authorization & Security
+### 3.3 Authorization & Security
 - Create Voter for Game resource
   - Check user is a participant in the game
-- Create Voter for User profile
-  - Check user can only access own profile
+- Create Voter for User
+  - Check user can only access own data
 - Configure security.yaml with:
   - Firewall rules
   - Access control
   - Role hierarchy
 - Add authentication middleware
-- Implement CSRF protection where needed
+- Implement rate limiting for API endpoints (e.g., registration, authentication, game actions) using Symfony's rate limiter to prevent abuse.
+- Protect JWT-based API endpoints with standard authentication and authorization checks rather than CSRF tokens, since the app uses `Authorization` header bearer tokens instead of cookie-based auth.
 
-### 3.3 User Profile Management
-- Create profile endpoint (`GET /api/profile`)
+### 3.4 User Management
+- Create get user endpoint (`GET /api/user/{user_id}`)
   - Return user data
   - Return games participated in (via UserGame)
-- Update username endpoint (`PATCH /api/profile/username`)
+  - Users can only see their own information
+  - Create dedicated feature test class 
+- Update username endpoint (`PATCH /api/user/{user_id}/username`)
   - Validate uniqueness
   - Update user
-- Update password endpoint (`PATCH /api/profile/password`)
+  - Users can only update their own username
+  - Create dedicated feature test class 
+- Update password endpoint (`PATCH /api/user/{user_id}/password`)
   - Validate old password
+  - Validate new password strength
   - Hash new password
   - Update user
+  - Users can only update their own password
+  - Create dedicated feature test class 
 - Delete game endpoint (`DELETE /api/games/{id}`)
   - Check user is host of the game
   - Soft delete or hard delete game
+  - Users can only delete their own games
+  - Create dedicated feature test class 
 
 ---
 
@@ -226,6 +259,7 @@ Create abstraction layer for question sources:
   - Fetch 5 questions from provider
   - Store questions in database
   - Return game ID and first question
+  - The returned question cannot contain the correct answer
 - Join game (`POST /api/games/{id}/join`) - for future multi-user
   - Add user as participant
 - Get current game state (`GET /api/games/{id}`)
@@ -235,6 +269,8 @@ Create abstraction layer for question sources:
 - Get next question (`GET /api/games/{id}/questions/next`)
   - Return next unanswered question for the user
   - Return null if all answered
+  - Do not return which answer is correct in the response
+  - Check the User has joined the game
 
 ### 5.2 Answer Submission
 - Submit answer endpoint (`POST /api/games/{id}/answers`)
@@ -276,7 +312,7 @@ Create abstraction layer for question sources:
 - Test game creation and question fetching
 - Test answer submission and scoring
 - Test game completion
-- Test profile management
+- Test user management
 - Test authorization voters
 
 ### 6.3 API Tests
@@ -324,13 +360,13 @@ src/
   - `/lobby` - Lobby (protected)
   - `/game/:id` - Game play (protected)
   - `/results/:id` - Results (protected)
-  - `/profile` - User profile (protected)
+  - `/user` - User profile (protected)
 - Create ProtectedRoute component
 - Implement redirect logic for unauthenticated users
 
 ### 7.3 API Service Layer
 - Create axios instance with base URL
-- Add request interceptor for JWT token
+- Add request interceptor for JWT token to attach bearer auth headers
 - Add response interceptor for error handling
 - Create authService with:
   - `register(username, password)`
@@ -345,8 +381,8 @@ src/
   - `completeGame(gameId)`
   - `deleteGame(gameId)`
   - `getResults(gameId)`
-- Create profileService with:
-  - `getProfile()`
+- Create userService with:
+  - `getUser()`
   - `updateUsername(username)`
   - `updatePassword(oldPassword, newPassword)`
   - `deleteGame(gameId)`

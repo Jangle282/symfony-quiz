@@ -23,6 +23,18 @@ docker compose up --build
 - `backend/` - Symfony API
 - `frontend/` - React + Vite frontend
 
+## Backend notes
+
+- Authentication now uses short-lived JWT access tokens and server-stored refresh tokens.
+- Login (`POST /api/login`) returns `token` (access JWT) and `refresh_token` (opaque string).
+- Refresh tokens: call `POST /api/token/refresh` with JSON body `{"refresh_token":"<token>"}` to obtain a new access token and a rotated refresh token.
+- Logout (`POST /api/logout`) revokes refresh tokens for the user.
+
+Run migrations after pulling these changes:
+```bash
+php bin/console doctrine:migrations:migrate
+```
+
 ## Notes
 
 - Environment variables are managed via `.env` files.

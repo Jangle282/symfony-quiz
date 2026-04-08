@@ -1,0 +1,32 @@
+framework:
+    rate_limiter:
+        api_login:
+            policy: fixed_window
+            limit: 5
+            interval: '1 minute'
+        api_registration:
+            policy: fixed_window
+            limit: 50
+            interval: '1 minute'
+        api_token_refresh:
+            policy: fixed_window
+            limit: 10
+            interval: '1 minute'
+        api_general:
+            policy: fixed_window
+            limit: 120
+            interval: '1 minute'
+
+when@test:
+    framework:
+        rate_limiter:
+            api_login:
+                cache_pool: cache.app
+            api_registration:
+                cache_pool: cache.app
+            api_token_refresh:
+                cache_pool: cache.app
+            api_general:
+                cache_pool: cache.app
+        cache:
+            app: cache.adapter.array

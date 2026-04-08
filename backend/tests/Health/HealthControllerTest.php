@@ -1,20 +1,24 @@
 <?php
 
-namespace App\Tests\Controller;
+namespace App\Tests\Health;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\ApiTestCase;
 
-class HealthControllerTest extends WebTestCase
+class HealthControllerTest extends ApiTestCase
 {
+    public function setUp(): void  
+    {
+        parent::setUp();
+    }
+
     public function testHealthEndpointReturnsOk(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/api/health');
+        $this->client->request('GET', '/api/health');
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertSame('ok', $data['status']);
         $this->assertArrayHasKey('timestamp', $data);
