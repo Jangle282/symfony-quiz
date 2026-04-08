@@ -13,16 +13,19 @@ if ($_SERVER['APP_DEBUG']) {
 }
 
 // Rebuild the test database from scratch on every PHPUnit run
-$dbPath = dirname(__DIR__) . '/var/test.db';
-if (file_exists($dbPath)) {
-    unlink($dbPath);
-}
-
 $kernel = new App\Kernel('test', true);
 $kernel->boot();
 
 $application = new Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
 $application->setAutoExit(false);
+
+// Drop the existing test database if it exists
+$application->run(new Symfony\Component\Console\Input\ArrayInput([
+    'command' => 'doctrine:database:drop',
+    '--force' => true,
+    '--if-exists' => true,
+    '--quiet' => true,
+]), new Symfony\Component\Console\Output\NullOutput());
 
 // Create the database
 $application->run(new Symfony\Component\Console\Input\ArrayInput([
