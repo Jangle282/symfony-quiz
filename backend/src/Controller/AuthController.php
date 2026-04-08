@@ -111,6 +111,7 @@ class AuthController extends AbstractController
     }
 
     #[Route('/token/refresh', name: 'api_token_refresh', methods: ['POST'])]
+    #[RateLimited('api_token_refresh', message: 'Too many refresh attempts, please try again later.')]
     public function refresh(Request $request, RefreshTokenRepository $refreshTokenRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = $this->getJsonBody($request);

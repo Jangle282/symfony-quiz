@@ -45,4 +45,24 @@ class RefreshControllerTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(400);
     }
+
+    public function testRefreshThrottlesAfterTooManyAttempts(): void
+    {
+        $this->consumeRateLimiter('api_token_refresh', 10);
+
+        $this->client->request(
+            'POST',
+            '/api/token/refresh',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
+            json_encode(['refresh_token' => 'any-token'])
+        );
+
+        $this->assertResponseStatusCodeSame(429);
+
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
+        $this->assertIsArray($data);
+        $this->assertSame('Too many refresh attempts, please try again later.', $data['error']);
+    }
 }

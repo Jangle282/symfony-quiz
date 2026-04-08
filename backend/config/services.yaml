@@ -28,4 +28,5 @@ services:
             $rateLimiters: !service_locator
                 api_login: '@limiter.api_login'
                 api_registration: '@limiter.api_registration'
+                api_token_refresh: '@limiter.api_token_refresh'
                 api_general: '@limiter.api_general'
