@@ -2,20 +2,23 @@
 
 namespace App\Tests\Profile;
 
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ProfileControllerTest extends WebTestCase
+class ProfileControllerTest extends ApiTestCase
 {
     use AuthenticatesUsers;
+    public function setUp(): void  
+    {
+        parent::setUp();
+    }
 
     public function testGetProfileReturnsUserData(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $game = GameFactory::createOne([
             'createdBy' => $user,
@@ -28,7 +31,7 @@ class ProfileControllerTest extends WebTestCase
 
         $token = $this->generateToken($user);
 
-        $client->request(
+        $this->client->request(
             'GET',
             '/api/user/' . $user->getId(),
             [],
@@ -43,7 +46,7 @@ class ProfileControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('user', $data);
         $this->assertArrayHasKey('games', $data);
@@ -70,9 +73,7 @@ class ProfileControllerTest extends WebTestCase
 
     public function testGetProfileReturnsUnauthorizedWithoutToken(): void
     {
-        $client = static::createClient();
-
-        $client->request(
+        $this->client->request(
             'GET',
             '/api/user/00000000-0000-0000-0000-000000000000',
             [],
@@ -88,9 +89,7 @@ class ProfileControllerTest extends WebTestCase
 
     public function testGetProfileReturnsUnauthorizedWithInvalidToken(): void
     {
-        $client = static::createClient();
-
-        $client->request(
+        $this->client->request(
             'GET',
             '/api/user/00000000-0000-0000-0000-000000000000',
             [],
@@ -107,8 +106,6 @@ class ProfileControllerTest extends WebTestCase
 
     public function testUsersCannotRetrieveEachOthersProfiles(): void
     {
-        $client = static::createClient();
-
         $user1 = UserFactory::createOne();
         $user2 = UserFactory::createOne();
 
@@ -118,7 +115,7 @@ class ProfileControllerTest extends WebTestCase
         $token1 = $this->generateToken($user1);
         $token2 = $this->generateToken($user2);
 
-        $client->request(
+        $this->client->request(
             'GET',
             '/api/user/' . $user1->getId(),
             [],
@@ -131,11 +128,11 @@ class ProfileControllerTest extends WebTestCase
         );
 
         $this->assertResponseIsSuccessful();
-        $data1 = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data1 = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertSame($user1->getUsername(), $data1['user']['username']);
         $this->assertCount(1, $data1['games']);
 
-        $client->request(
+        $this->client->request(
             'GET',
             '/api/user/' . $user2->getId(),
             [],
@@ -148,7 +145,7 @@ class ProfileControllerTest extends WebTestCase
         );
 
         $this->assertResponseIsSuccessful();
-        $data2 = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data2 = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertSame($user2->getUsername(), $data2['user']['username']);
         $this->assertCount(0, $data2['games']);
         

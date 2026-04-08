@@ -2,22 +2,26 @@
 
 namespace App\Tests\Auth;
 
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class LogoutControllerTest extends WebTestCase
+class LogoutControllerTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
     public function testLogoutReturnsNoContentForAuthenticatedUser(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $token = $this->generateToken($user);
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/logout',
             [],
@@ -30,13 +34,11 @@ class LogoutControllerTest extends WebTestCase
 
     public function testLogoutReturnsUnauthorizedWithoutToken(): void
     {
-        $client = static::createClient();
-
-        $client->request('POST', '/api/logout');
+        $this->client->request('POST', '/api/logout');
 
         $this->assertResponseStatusCodeSame(401);
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayNotHasKey('token', $data);
         $this->assertArrayNotHasKey('refresh_token', $data);
     }

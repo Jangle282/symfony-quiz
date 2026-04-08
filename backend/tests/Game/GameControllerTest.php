@@ -3,26 +3,30 @@
 namespace App\Tests\Game;
 
 use App\Entity\Game;
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class GameControllerTest extends WebTestCase
+class GameControllerTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
     public function testDeleteGameSucceedsForOwner(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $game = GameFactory::createOne(['createdBy' => $user]);
         $gameId = $game->getId();
 
         $token = $this->generateToken($user);
 
-        $client->request(
+        $this->client->request(
             'DELETE',
             '/api/games/' . $gameId,
             [],
@@ -39,8 +43,6 @@ class GameControllerTest extends WebTestCase
 
     public function testDeleteGameFailsForUnauthorizedUser(): void
     {
-        $client = static::createClient();
-
         $owner = UserFactory::createOne();
         $other = UserFactory::createOne();
         $game = GameFactory::createOne(['createdBy' => $owner]);
@@ -48,7 +50,7 @@ class GameControllerTest extends WebTestCase
 
         $token = $this->generateToken($other);
 
-        $client->request(
+        $this->client->request(
             'DELETE',
             '/api/games/' . $gameId,
             [],
@@ -64,12 +66,10 @@ class GameControllerTest extends WebTestCase
 
     public function testDeleteGameFailsWithoutAuthentication(): void
     {
-        $client = static::createClient();
-
         $game = GameFactory::createOne();
         $gameId = $game->getId();
 
-        $client->request(
+        $this->client->request(
             'DELETE',
             '/api/games/' . $gameId,
             [],

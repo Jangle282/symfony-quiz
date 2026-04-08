@@ -2,18 +2,21 @@
 
 namespace App\Tests\Auth;
 
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class LoginControllerTest extends WebTestCase
+class LoginControllerTest extends ApiTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
     public function testLoginReturnsTokenWithValidCredentials(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne(['username' => 'login_user_' . bin2hex(random_bytes(6))]);
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/login',
             [],
@@ -28,7 +31,7 @@ class LoginControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('token', $data);
         $this->assertArrayHasKey('user', $data);
@@ -37,9 +40,7 @@ class LoginControllerTest extends WebTestCase
 
     public function testLoginReturnsUnauthorizedWithInvalidCredentials(): void
     {
-        $client = static::createClient();
-
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/login',
             [],
@@ -53,18 +54,16 @@ class LoginControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(401);
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertSame('Invalid credentials.', $data['error']);
     }
 
     public function testLoginWithUserCreatedDirectlyInDatabase(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne(['username' => 'db_user_' . bin2hex(random_bytes(6))]);
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/login',
             [],
@@ -79,7 +78,7 @@ class LoginControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('token', $data);
         $this->assertArrayHasKey('user', $data);

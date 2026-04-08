@@ -3,13 +3,19 @@
 namespace App\Tests\Profile;
 
 use App\Entity\User;
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class UpdatePasswordControllerTest extends WebTestCase
+class UpdatePasswordControllerTest extends ApiTestCase
 {
     use AuthenticatesUsers;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+    }
 
     private function createUserAndToken(): array
     {
@@ -21,10 +27,9 @@ class UpdatePasswordControllerTest extends WebTestCase
 
     public function testUpdatePasswordWithValidData(): void
     {
-        $client = static::createClient();
         [$user, $token] = $this->createUserAndToken();
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/password',
             [],
@@ -43,7 +48,7 @@ class UpdatePasswordControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('message', $data);
         $this->assertStringContainsString('successfully', $data['message']);
@@ -51,9 +56,7 @@ class UpdatePasswordControllerTest extends WebTestCase
 
     public function testUpdatePasswordWithoutToken(): void
     {
-        $client = static::createClient();
-
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/00000000-0000-0000-0000-000000000000/password',
             [],
@@ -72,11 +75,10 @@ class UpdatePasswordControllerTest extends WebTestCase
     }
 
     public function testUpdatePasswordWithInvalidCurrentPassword(): void
-    {
-        $client = static::createClient();
+    {       
         [$user, $token] = $this->createUserAndToken();
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/password',
             [],
@@ -93,17 +95,16 @@ class UpdatePasswordControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
         $this->assertStringContainsString('Current password', $data['error']);
     }
 
     public function testUpdatePasswordWithTooShortPassword(): void
     {
-        $client = static::createClient();
         [$user, $token] = $this->createUserAndToken();
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/password',
             [],
@@ -120,17 +121,16 @@ class UpdatePasswordControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
         $this->assertStringContainsString('at least 10 characters', $data['error']);
     }
 
     public function testUpdatePasswordWithoutNumbers(): void
     {
-        $client = static::createClient();
         [$user, $token] = $this->createUserAndToken();
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/password',
             [],
@@ -147,16 +147,15 @@ class UpdatePasswordControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
     }
 
     public function testUpdatePasswordWithoutSymbols(): void
     {
-        $client = static::createClient();
         [$user, $token] = $this->createUserAndToken();
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/password',
             [],
@@ -173,14 +172,12 @@ class UpdatePasswordControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
     }
 
     public function testUserCanOnlyChangeTheirOwnPassword(): void
     {
-        $client = static::createClient();
-
         $originalPassword = 'Original@Pass123';
         $newPassword = 'NewPassword456@';
 
@@ -189,7 +186,7 @@ class UpdatePasswordControllerTest extends WebTestCase
 
         $token1 = $this->generateToken($user1);
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user1->getId() . '/password',
             [],

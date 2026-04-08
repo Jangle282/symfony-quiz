@@ -2,24 +2,28 @@
 
 namespace App\Tests\Profile;
 
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class UpdateUsernameControllerTest extends WebTestCase
+class UpdateUsernameControllerTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 
+    public function setUp(): void
+    {
+        parent::setUp();
+    }
+
     public function testUpdateUsernameWithValidData(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $token = $this->generateToken($user);
 
         $newUsername = 'new_username_' . bin2hex(random_bytes(6));
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/username',
             [],
@@ -37,7 +41,7 @@ class UpdateUsernameControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('user', $data);
         $this->assertSame($newUsername, $data['user']['username']);
@@ -45,11 +49,9 @@ class UpdateUsernameControllerTest extends WebTestCase
 
     public function testUpdateUsernameWithoutToken(): void
     {
-        $client = static::createClient();
-
         $newUsername = 'new_username_' . bin2hex(random_bytes(6));
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/00000000-0000-0000-0000-000000000000/username',
             [],
@@ -68,12 +70,10 @@ class UpdateUsernameControllerTest extends WebTestCase
 
     public function testUpdateUsernameWithEmptyUsername(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $token = $this->generateToken($user);
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/username',
             [],
@@ -89,20 +89,18 @@ class UpdateUsernameControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
     }
 
     public function testUpdateUsernameWithExistingUsername(): void
     {
-        $client = static::createClient();
-
         $existingUser = UserFactory::createOne();
         $user = UserFactory::createOne();
 
         $token = $this->generateToken($user);
 
-        $client->request(
+        $this->client->request(
             'PATCH',
             '/api/user/' . $user->getId() . '/username',
             [],
@@ -118,7 +116,7 @@ class UpdateUsernameControllerTest extends WebTestCase
         );
 
         $this->assertResponseStatusCodeSame(409);
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertArrayHasKey('error', $data);
     }
 }

@@ -2,20 +2,24 @@
 
 namespace App\Tests\Auth;
 
+use App\Tests\ApiTestCase;
 use App\Tests\Factory\RefreshTokenFactory;
 use App\Tests\Factory\UserFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class RefreshControllerTest extends WebTestCase
+class RefreshControllerTest extends ApiTestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+    }
+
     public function testRefreshReturnsNewTokenForAuthenticatedUser(): void
     {
-        $client = static::createClient();
-
         $user = UserFactory::createOne();
         $refreshToken = RefreshTokenFactory::createOne(['user' => $user]);
 
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/token/refresh',
             [],
@@ -27,7 +31,7 @@ class RefreshControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true);
+        $data = json_decode($this->client->getResponse()->getContent() ?: '', true);
         $this->assertIsArray($data);
         $this->assertArrayHasKey('token', $data);
         $this->assertArrayHasKey('refresh_token', $data);
@@ -38,9 +42,7 @@ class RefreshControllerTest extends WebTestCase
 
     public function testRefreshReturnsBadRequestWithoutToken(): void
     {
-        $client = static::createClient();
-
-        $client->request('POST', '/api/token/refresh');
+        $this->client->request('POST', '/api/token/refresh');
 
         $this->assertResponseStatusCodeSame(400);
     }
