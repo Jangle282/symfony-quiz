@@ -160,7 +160,7 @@ Columns
 - entity name Answer
 Columns
 - id (uuid, primary key)
-- text (vachar 255, not null)
+- answer_text (varchar 255, not null)
 - question_id (foreign key to quiz_question)
 - user_selected (boolean)
 - is_correct (boolean)
