@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Auth;
+namespace App\Tests\Feature\Auth;
 
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\RefreshTokenFactory;

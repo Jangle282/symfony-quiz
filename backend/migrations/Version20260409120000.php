@@ -38,7 +38,7 @@ final class Version20260409120000 extends AbstractMigration
         $this->addSql('CREATE TABLE quiz_questions (id UUID NOT NULL, round_id UUID NOT NULL, question_text TEXT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX IDX_QUIZ_QUESTIONS_ROUND ON quiz_questions (round_id)');
 
-        $this->addSql('CREATE TABLE quiz_answers (id UUID NOT NULL, question_id UUID NOT NULL, user_selected BOOLEAN NOT NULL, is_correct BOOLEAN NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE quiz_answers (id UUID NOT NULL, question_id UUID NOT NULL, answer_text VARCHAR(255) NOT NULL, user_selected BOOLEAN NOT NULL, is_correct BOOLEAN NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX IDX_QUIZ_ANSWERS_QUESTION ON quiz_answers (question_id)');
 
         $this->addSql('CREATE TABLE refresh_token (id SERIAL NOT NULL, token VARCHAR(128) NOT NULL, user_id UUID NOT NULL, expires_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, revoked BOOLEAN NOT NULL, PRIMARY KEY (id))');

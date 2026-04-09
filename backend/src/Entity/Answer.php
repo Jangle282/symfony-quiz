@@ -21,6 +21,9 @@ class Answer
     #[ORM\JoinColumn(nullable: false)]
     private ?Question $question = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $answerText = null;
+
     #[ORM\Column]
     private ?bool $userSelected = null;
 
@@ -40,6 +43,18 @@ class Answer
     public function setQuestion(?Question $question): static
     {
         $this->question = $question;
+
+        return $this;
+    }
+
+    public function getAnswerText(): ?string
+    {
+        return $this->answerText;
+    }
+
+    public function setAnswerText(string $answerText): static
+    {
+        $this->answerText = $answerText;
 
         return $this;
     }

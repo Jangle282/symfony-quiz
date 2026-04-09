@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Health;
+namespace App\Tests\Feature\Health;
 
 use App\Tests\ApiTestCase;
 
