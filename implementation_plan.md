@@ -77,6 +77,9 @@ Create the following entities:
 
 #### User Entity
 ```
+- table name users
+- entity name User
+Columns
 - id (uuid, primary key)
 - username (string, unique)
 - password (string, hashed)
@@ -84,56 +87,82 @@ Create the following entities:
 - updated_at (datetime)
 ```
 
+#### Difficulty Entity
+```
+- table name quiz_difficulty
+- entity name Difficulty
+Columns
+- id (uuid, primary key)
+- name (string, not nullable)
+```
+
 #### Game Entity
 ```
+- table name quiz_games
+- entity name Game
+Columns
 - id (uuid, primary key)
 - name (string, nullable) - optional game name
-- created_by (uuid, foreign key to User) - user who created the game
+- difficulty (Foreign key to quiz_difficulty)
+- created_by (uuid, foreign key to user) - user who created the game
 - total_score (integer) - team score
-- total_questions (integer)
+- started_at (datetime)
 - completed_at (datetime, nullable)
 - created_at (datetime)
 ```
 
 #### UserGame Entity (Join table for many-to-many User-Game with additional data)
 ```
+- table name user_game
+- entity name UserGame
+Columns
 - id (uuid, primary key)
-- user_id (uuid, foreign key to User)
-- game_id (uuid, foreign key to Game)
+- user_id (uuid, foreign key to user)
+- game_id (uuid, foreign key to quiz_game)
 - joined_at (datetime)
 - role (string, enum: 'host', 'participant')
 ```
 
+#### Round Category
+```
+- table name quiz_category
+- entity name Category
+Columns
+- id (uuid, primary key)
+- name (string, not nullable)
+```
+
 #### Round Entity
 ```
+- table name quiz_rounds
+- entity name Round
+Columns
 - id (uuid, primary key)
-- game_id (foreign key to Game)
+- game_id (foreign key to quiz_game)
+- category_id (foreign key to quiz_category)
 - round_number (integer)
-- category (string)
-- difficulty (string, nullable)
 - created_at (datetime)
 ```
 
 #### Question Entity
 ```
+- table name quiz_questions
+- entity name Question
+Columns
 - id (uuid, primary key)
-- round_id (foreign key to Round)
+- round_id (foreign key to quiz_round)
 - question_text (text)
-- correct_answer (string)
-- incorrect_answers (json)
-- category (string)
-- difficulty (string)
-- question_type (string)
-- order_number (integer)
 ```
 
 #### Answer Entity
 ```
+- table name quiz_answers
+- entity name Answer
+Columns
 - id (uuid, primary key)
-- question_id (foreign key to Question)
-- user_answer (string)
+- question_id (foreign key to quiz_question)
+- user_selected (boolean)
 - is_correct (boolean)
-- answered_at (datetime)
 ```
 
 ### 2.2 Doctrine Entity Implementation

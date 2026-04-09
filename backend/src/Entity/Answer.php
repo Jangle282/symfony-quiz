@@ -8,6 +8,7 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity(repositoryClass: AnswerRepository::class)]
+#[ORM\Table(name: 'quiz_answers')]
 class Answer
 {
     #[ORM\Id]
@@ -20,19 +21,11 @@ class Answer
     #[ORM\JoinColumn(nullable: false)]
     private ?Question $question = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $userAnswer = null;
+    #[ORM\Column]
+    private ?bool $userSelected = null;
 
     #[ORM\Column]
     private ?bool $isCorrect = null;
-
-    #[ORM\Column]
-    private ?\DateTimeImmutable $answeredAt = null;
-
-    public function __construct()
-    {
-        $this->answeredAt = new \DateTimeImmutable();
-    }
 
     public function getId(): ?UuidInterface
     {
@@ -51,14 +44,14 @@ class Answer
         return $this;
     }
 
-    public function getUserAnswer(): ?string
+    public function isUserSelected(): ?bool
     {
-        return $this->userAnswer;
+        return $this->userSelected;
     }
 
-    public function setUserAnswer(string $userAnswer): static
+    public function setUserSelected(bool $userSelected): static
     {
-        $this->userAnswer = $userAnswer;
+        $this->userSelected = $userSelected;
 
         return $this;
     }
@@ -71,18 +64,6 @@ class Answer
     public function setIsCorrect(bool $isCorrect): static
     {
         $this->isCorrect = $isCorrect;
-
-        return $this;
-    }
-
-    public function getAnsweredAt(): ?\DateTimeImmutable
-    {
-        return $this->answeredAt;
-    }
-
-    public function setAnsweredAt(\DateTimeImmutable $answeredAt): static
-    {
-        $this->answeredAt = $answeredAt;
 
         return $this;
     }

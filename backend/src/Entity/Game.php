@@ -10,6 +10,7 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
+#[ORM\Table(name: 'quiz_games')]
 class Game
 {
     #[ORM\Id]
@@ -17,6 +18,13 @@ class Game
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
     private ?UuidInterface $id = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $name = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Difficulty $difficulty = null;
 
     #[ORM\ManyToOne(inversedBy: 'createdGames')]
     #[ORM\JoinColumn(nullable: false)]
@@ -26,16 +34,10 @@ class Game
     private ?int $totalScore = null;
 
     #[ORM\Column]
-    private ?int $totalQuestions = null;
-
-    #[ORM\Column]
     private ?\DateTimeImmutable $startedAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $completedAt = null;
-
-    #[ORM\Column]
-    private ?bool $saved = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -51,7 +53,6 @@ class Game
         $this->rounds = new ArrayCollection();
         $this->userGames = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
-        $this->saved = false;
     }
 
     public function getId(): ?UuidInterface
@@ -71,6 +72,30 @@ class Game
         return $this;
     }
 
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getDifficulty(): ?Difficulty
+    {
+        return $this->difficulty;
+    }
+
+    public function setDifficulty(?Difficulty $difficulty): static
+    {
+        $this->difficulty = $difficulty;
+
+        return $this;
+    }
+
     public function getTotalScore(): ?int
     {
         return $this->totalScore;
@@ -79,18 +104,6 @@ class Game
     public function setTotalScore(int $totalScore): static
     {
         $this->totalScore = $totalScore;
-
-        return $this;
-    }
-
-    public function getTotalQuestions(): ?int
-    {
-        return $this->totalQuestions;
-    }
-
-    public function setTotalQuestions(int $totalQuestions): static
-    {
-        $this->totalQuestions = $totalQuestions;
 
         return $this;
     }
@@ -115,18 +128,6 @@ class Game
     public function setCompletedAt(?\DateTimeImmutable $completedAt): static
     {
         $this->completedAt = $completedAt;
-
-        return $this;
-    }
-
-    public function isSaved(): ?bool
-    {
-        return $this->saved;
-    }
-
-    public function setSaved(bool $saved): static
-    {
-        $this->saved = $saved;
 
         return $this;
     }

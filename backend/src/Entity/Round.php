@@ -10,6 +10,7 @@ use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity(repositoryClass: RoundRepository::class)]
+#[ORM\Table(name: 'quiz_rounds')]
 class Round
 {
     #[ORM\Id]
@@ -25,11 +26,9 @@ class Round
     #[ORM\Column]
     private ?int $roundNumber = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $category = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $difficulty = null;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Category $category = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -72,26 +71,14 @@ class Round
         return $this;
     }
 
-    public function getCategory(): ?string
+    public function getCategory(): ?Category
     {
         return $this->category;
     }
 
-    public function setCategory(string $category): static
+    public function setCategory(?Category $category): static
     {
         $this->category = $category;
-
-        return $this;
-    }
-
-    public function getDifficulty(): ?string
-    {
-        return $this->difficulty;
-    }
-
-    public function setDifficulty(?string $difficulty): static
-    {
-        $this->difficulty = $difficulty;
 
         return $this;
     }

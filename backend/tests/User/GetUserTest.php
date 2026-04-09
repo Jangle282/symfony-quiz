@@ -22,9 +22,7 @@ class GetUserTest extends ApiTestCase
         $game = GameFactory::createOne([
             'createdBy' => $user,
             'totalScore' => 85,
-            'totalQuestions' => 10,
             'completedAt' => new \DateTimeImmutable(),
-            'saved' => true,
         ]);
         UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'owner']);
 
@@ -64,8 +62,6 @@ class GetUserTest extends ApiTestCase
         $this->assertArrayHasKey('joinedAt', $returnedGame);
         $this->assertArrayHasKey('totalScore', $returnedGame);
         $this->assertSame(85, $returnedGame['totalScore']);
-        $this->assertArrayHasKey('totalQuestions', $returnedGame);
-        $this->assertSame(10, $returnedGame['totalQuestions']);
         $this->assertArrayHasKey('startedAt', $returnedGame);
         $this->assertArrayHasKey('completedAt', $returnedGame);
     }
