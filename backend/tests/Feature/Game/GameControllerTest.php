@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Game;
+namespace App\Tests\Feature\Game;
 
 use App\Entity\Game;
 use App\Tests\ApiTestCase;

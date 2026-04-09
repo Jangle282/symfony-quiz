@@ -30,3 +30,5 @@ services:
                 api_registration: '@limiter.api_registration'
                 api_token_refresh: '@limiter.api_token_refresh'
                 api_general: '@limiter.api_general'
+
+    App\Service\QuestionProviderInterface: '@App\Service\OpenTriviaDBProvider'

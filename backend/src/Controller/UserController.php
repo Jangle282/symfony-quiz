@@ -45,7 +45,6 @@ class UserController extends AbstractController
                 'joinedAt' => $userGame->getJoinedAt()?->format(DATE_ATOM),
                 'createdBy' => (string) $game->getCreatedBy()?->getId(),
                 'totalScore' => $game->getTotalScore(),
-                'totalQuestions' => $game->getTotalQuestions(),
                 'startedAt' => $game->getStartedAt()?->format(DATE_ATOM),
                 'completedAt' => $game->getCompletedAt()?->format(DATE_ATOM),
             ];
