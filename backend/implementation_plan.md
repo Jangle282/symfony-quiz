@@ -22,7 +22,7 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
 ### 1.1 Docker Configuration
 - Create `docker-compose.yml` with services:
   - `nginx` - Web server
-  - `php-fpm` - PHP 8.2+ with Symfony
+  - `php-fpm` - PHP 8.3+ with Symfony
   - `postgres` - PostgreSQL 15+
   - `node` - Node.js for React development
 - Create `Dockerfile` for PHP/Symfony service
@@ -160,7 +160,7 @@ Columns
 - entity name Answer
 Columns
 - id (uuid, primary key)
-- text (vachar 255, not null)
+- answer_text (varchar 255, not null)
 - question_id (foreign key to quiz_question)
 - user_selected (boolean)
 - is_correct (boolean)
@@ -255,7 +255,7 @@ Columns
 Create abstraction layer for question sources:
 
 - Create `QuestionProviderInterface` with methods:
-  - `createQuestionsAndAnswers(rounds, difficulty): QuestionDto[]`
+  - `fetchQuestions(Round $round, Difficulty $difficulty): QuestionDTO[]`
 
 ### 4.2 Open Trivia DB Implementation
 - Create `OpenTriviaDBProvider` implementing `QuestionProviderInterface`
@@ -264,7 +264,7 @@ Create abstraction layer for question sources:
 - Add response parsing and validation
 - Handle API errors and rate limiting
 - Decode HTML entities in questions/answers
-- CreateQuestionsAndAnswers() should:
+- `fetchQuestions()` should:
   - Map the category of the round to the categories available from the api 
   - Map the difficulty of the game to the difficulties available from the api
   - Fetch 10 questions per round 
@@ -273,7 +273,11 @@ Create abstraction layer for question sources:
 
 ### 4.3 Question Service
 - Create `QuestionService` that uses `QuestionProviderInterface`
-- Implement method to fetch and store questions for a round
+- Implement `createQuestionsAndAnswers(array $rounds, Difficulty $difficulty): void` which:
+  - Calls `fetchQuestions(Round, Difficulty)` on the provider for each round
+  - Persists the returned `QuestionDTO`/`AnswerDTO` data as `Question`/`Answer` entities
+  - Sets `userSelected = false` on all answers by default
+  - Flushes all changes in a single `EntityManager::flush()` call
 - Shuffle answer options (mix correct with incorrect)
 - Add factory pattern for provider selection
 - Add configuration for default provider
