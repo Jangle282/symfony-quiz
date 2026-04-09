@@ -22,7 +22,7 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
 ### 1.1 Docker Configuration
 - Create `docker-compose.yml` with services:
   - `nginx` - Web server
-  - `php-fpm` - PHP 8.2+ with Symfony
+  - `php-fpm` - PHP 8.3+ with Symfony
   - `postgres` - PostgreSQL 15+
   - `node` - Node.js for React development
 - Create `Dockerfile` for PHP/Symfony service

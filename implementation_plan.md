@@ -118,7 +118,7 @@ Columns
 Columns
 - id (uuid, primary key)
 - user_id (uuid, foreign key to user)
-- game_id (uuid, foreign key to quiz_game)
+- game_id (uuid, foreign key to quiz_games)
 - joined_at (datetime)
 - role (string, enum: 'host', 'participant')
 ```
@@ -138,7 +138,7 @@ Columns
 - entity name Round
 Columns
 - id (uuid, primary key)
-- game_id (foreign key to quiz_game)
+- game_id (foreign key to quiz_games)
 - category_id (foreign key to quiz_category)
 - round_number (integer)
 - created_at (datetime)
@@ -150,7 +150,7 @@ Columns
 - entity name Question
 Columns
 - id (uuid, primary key)
-- round_id (foreign key to quiz_round)
+- round_id (foreign key to quiz_rounds)
 - question_text (text)
 ```
 
@@ -160,7 +160,7 @@ Columns
 - entity name Answer
 Columns
 - id (uuid, primary key)
-- question_id (foreign key to quiz_question)
+- question_id (foreign key to quiz_questions)
 - user_selected (boolean)
 - is_correct (boolean)
 ```
