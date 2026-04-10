@@ -3,13 +3,8 @@
 namespace App\Controller;
 
 use App\Attribute\RateLimited;
-use App\Entity\Category;
-use App\Entity\Difficulty;
 use App\Entity\Game;
-use App\Entity\Round;
-use App\Entity\UserGame;
 use App\Service\QuestionService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,53 +17,28 @@ class GameController extends AbstractController
     #[RateLimited('api_general')]
     public function create(
         Request $request,
-        EntityManagerInterface $entityManager,
+        \App\Service\GameService $gameService,
         QuestionService $questionService,
     ): JsonResponse {
         $user = $this->getUser();
-
         $data = $request->toArray();
         $difficultyName = $data['difficulty'] ?? 'medium';
         $gameName = $data['name'] ?? null;
 
-        $difficulty = $entityManager->getRepository(Difficulty::class)->findOneBy(['name' => $difficultyName]);
-        if (!$difficulty) {
-            return $this->json(['error' => 'Invalid difficulty. Valid values: easy, medium, hard.'], Response::HTTP_BAD_REQUEST);
+        try {
+            $result = $gameService->createGame($user, $difficultyName, $gameName);
+        } catch (\App\Exception\GameException $e) {
+            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
         }
 
-        $category = $entityManager->getRepository(Category::class)->findOneBy(['name' => 'General Knowledge']);
-        if (!$category) {
-            return $this->json(['error' => 'Category "General Knowledge" not found. Please seed the database.'], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        $game = new Game();
-        $game->setName($gameName);
-        $game->setDifficulty($difficulty);
-        $game->setCreatedBy($user);
-        $game->setTotalScore(0);
-        $game->setStartedAt(new \DateTimeImmutable());
-        $entityManager->persist($game);
-
-        $userGame = new UserGame();
-        $userGame->setUser($user);
-        $userGame->setGame($game);
-        $userGame->setRole('host');
-        $entityManager->persist($userGame);
-        $game->addUserGame($userGame);
-
-        $round = new Round();
-        $round->setGame($game);
-        $round->setCategory($category);
-        $round->setRoundNumber(1);
-        $entityManager->persist($round);
-        $game->addRound($round);
-
-        $entityManager->flush();
+        $game = $result['game'];
+        $round = $result['round'];
+        $category = $result['category'];
+        $difficulty = $result['difficulty'];
 
         $questionService->createQuestionsAndAnswers([$round], $difficulty, 5);
 
         $firstQuestion = $round->getQuestions()->first();
-
         $questionData = null;
         if ($firstQuestion) {
             $answers = [];
@@ -78,7 +48,6 @@ class GameController extends AbstractController
                     'answer_text' => $answer->getAnswerText(),
                 ];
             }
-
             $questionData = [
                 'id' => $firstQuestion->getId()->toString(),
                 'question_text' => $firstQuestion->getQuestionText(),
@@ -101,13 +70,46 @@ class GameController extends AbstractController
 
     #[Route('/api/games/{id}', name: 'api_game_delete', methods: ['DELETE'])]
     #[RateLimited('api_general')]
-    public function delete(Game $game, Request $request, EntityManagerInterface $entityManager): Response
+    public function delete(Game $game, Request $request, \App\Service\GameService $gameService): Response
     {
         $this->denyAccessUnlessGranted('GAME_DELETE', $game);
-
-        $entityManager->remove($game);
-        $entityManager->flush();
-
+        $gameService->deleteGame($game);
         return new Response(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/games/{id}', name: 'api_game_show', methods: ['GET'])]
+    #[RateLimited('api_general')]
+    public function show(Game $game, \App\Service\GameService $gameService): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('GAME_VIEW', $game);
+        $data = $gameService->getGameData($game);
+        return $this->json($data);
+    }
+
+    #[Route('/api/games/{id}/complete', name: 'api_game_complete', methods: ['POST'])]
+    #[RateLimited('api_general')]
+    public function complete(Game $game, \App\Service\GameService $gameService): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('GAME_VIEW', $game);
+        try {
+            $result = $gameService->completeGame($game);
+        } catch (\App\Exception\GameException $e) {
+            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+        }
+        return $this->json([
+            'message' => 'Game completed.',
+            'game_id' => $result['game_id'],
+            'total_score' => $result['total_score'],
+            'completed_at' => $result['completed_at'],
+        ]);
+    }
+
+    #[Route('/api/games/{id}/results', name: 'api_game_results', methods: ['GET'])]
+    #[RateLimited('api_general')]
+    public function results(Game $game, \App\Service\GameService $gameService): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('GAME_VIEW', $game);
+        $data = $gameService->getResults($game);
+        return $this->json($data);
     }
 }

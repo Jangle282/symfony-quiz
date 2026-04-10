@@ -3,6 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\Game;
+use App\Entity\User;
+use App\Entity\Category;
+use App\Entity\Difficulty;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -14,6 +17,19 @@ class GameRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Game::class);
+    }
+
+    public function create(User $user, Difficulty $difficulty, Category $category, ?string $name = null): Game
+    {
+        $game = new Game();
+        $game->setName($name);
+        $game->setDifficulty($difficulty);
+        $game->setCreatedBy($user);
+        $game->setTotalScore(0);
+        $game->setStartedAt(new \DateTimeImmutable());
+        $this->getEntityManager()->persist($game);
+        $this->getEntityManager()->flush();
+        return $game;
     }
 
 //    /**
