@@ -2,7 +2,8 @@
     "name": "Symfony Quiz",
     "dockerComposeFile": "../docker-compose.yml",
     "service": "php",
-    "workspaceFolder": "/srv/app",
+    "runServices": ["php", "postgres", "nginx"],
+    "workspaceFolder": "/srv/project",
     "customizations": {
         "vscode": {
             "settings": {
@@ -14,6 +15,6 @@
             ]
         }
     },
-    "forwardPorts": [8080, 5173, 5432],
+    "forwardPorts": [8080],
     "shutdownAction": "none"
 }

@@ -9,6 +9,15 @@ A pub quiz game application using Open Trivia Database API with user accounts, g
 - **Infrastructure**: Docker & Docker Compose
 - **API**: Open Trivia Database (https://opentdb.com/)
 
+## Backend Architecture
+- Unauthenticated endpoints should be covered by a throttle by IP. Authenticated routes by a throttle by user id. 
+- Throttling should be handled by a global handler and not duplicated
+- Controllers should be slim, utilising service classes for logic. They should focus on Requests and Responses and orchestrating services.
+- Services should avoid requiring other services, unless necessary. To avoid circular references. 
+- Where necessary Repository layers for models can be created to avoid duplication of database layer logic. 
+- Endpoints should be covered with feature tests concerned with authorisation, authentication, request validation and responses. 
+- Service classes should be covered with unit tests, although the database does not need to be mocked. 
+
 ## Frontend Architecture
 - Build the frontend as a Single Page Application (SPA)
 - Use the backend as an API-only service for authentication and quiz data
@@ -175,6 +184,10 @@ Columns
 - Create migrations for all entities
 - Set up entity relationships and cascade operations
 
+### 2.3 Seeders and Factories
+- Set up a basic Seeder structure creating a user with a game which has 1 round with 5 questions and answers
+- Create a basic factory for each model for use in tests and seeders
+
 ---
 
 ## Phase 3: Backend - Authentication & Authorization
@@ -187,7 +200,7 @@ Columns
   - ensure tests can be run inside the docker container directly from VScode UI 'run' buttons.
   - create a feature test class for the health endpoint
 
-### 3.2 User Authentication
+### 3.2 User Authentication Endpoints
 - Implement User registration endpoint (`POST /api/register`)
   - Validate username uniqueness
   - Validate password strength (minimum 10 characters, mix of letters, numbers, symbols)
@@ -282,51 +295,49 @@ Create abstraction layer for question sources:
 ## Phase 5: Backend - Game Logic
 
 ### 5.1 Game Management Endpoints
-- Start new game (`POST /api/games`)
-  - Create Game entity
-  - Create UserGame entity for creator (role: host)
-  - Create Round entity (1 round, general knowledge)
-  - Fetch 5 questions from provider
-  - Store questions and answers in database
-  - Return game ID and first question
-  - The returned question cannot contain the correct answer
-- Join game (`POST /api/games/{id}/join`) - for future multi-user
-  - Add user as participant
-- Get current game state (`GET /api/games/{id}`)
-  - Return game progress
-  - Return current question
-  - Check user is participant
-- Get next question (`GET /api/games/{id}/rounds/{id}/questions/{id}/next`)
-  - Questions are ordered by id
-  - Return next question of the round with which answer was previously selected (if any given)
-  - Return null if all answered
-  - Do not return which answer is correct in the response
-  - Check the User has joined the game
-- Get previous question (`GET /api/games/{id}/rounds/{id}/questions/{id}/previous`)
-  - Questions are ordered by id within a round
-  - Return previous question in the round with which answer was previously selected (if any given)
-  - Return null if there is no previous question
-  - Do not return which answer is correct in the response
-  - Check the User has joined the game
-
-### 5.2 Answer Submission
-- Submit answer endpoint (`POST /api/games/{id}/rounds/{id}/questions/{id}/answers/{id}/select`)
-  - Validate question belongs to game
-  - Validate the answer relates to the question
-  - Validate the user is a participant of the game
-  - Validate the Game is not already completed
-  - update user_selection in Answer entity.
-  - removed user_selection from other answers to the same question
-
-### 5.3 Game Completion
-- Complete game endpoint (`POST /api/games/{id}/complete`)
-  - Mark game as completed
-
-### 5.4 Results
-- Get game results (`GET /api/games/{id}/results`)
-  - Return total team score
-  - Return question breakdown (question, team answer, correct answer, is_correct)
-  - Check user is participant
+- GameController endpoints. Using a GameService for business Logic. 
+  - Start new game (`POST /api/games`)
+    - Create Game entity
+    - Create UserGame entity for creator (role: host)
+    - Create Round entity (1 round, general knowledge)
+    - Fetch 5 questions from provider
+    - Store questions and answers in database
+    - Return game ID and first question
+    - The returned question cannot contain the correct answer
+  - Get current game state (`GET /api/games/{id}`)
+    - Return game progress
+    - Return current question
+    - Check user is participant
+  - Complete game endpoint (`POST /api/games/{id}/complete`)
+    - Mark game as completed
+  - Get game results (`GET /api/games/{id}/results`)
+    - Return total team score
+    - Return question breakdown (question, team answer, correct answer, is_correct)
+    - Check user is participant
+- UserGameController Using a UserGame Service for logic
+  - Join game (`POST /api/games/{id}/join`) - for future multi-user
+    - Add user as participant
+- QuestionController using QuestionService for logic
+  - Get next question (`GET /api/games/{id}/rounds/{id}/questions/{id}/next`)
+    - Questions are ordered by id
+    - Return next question of the round with which answer was previously selected (if any given)
+    - Return null if all answered
+    - Do not return which answer is correct in the response
+    - Check the User has joined the game
+  - Get previous question (`GET /api/games/{id}/rounds/{id}/questions/{id}/previous`)
+    - Questions are ordered by id within a round
+    - Return previous question in the round with which answer was previously selected (if any given)
+    - Return null if there is no previous question
+    - Do not return which answer is correct in the response
+    - Check the User has joined the game
+- AnswerController using an AnswerService for logic
+  - Submit answer endpoint (`POST /api/games/{id}/rounds/{id}/questions/{id}/answers/{id}/select`)
+    - Validate question belongs to game
+    - Validate the answer relates to the question
+    - Validate the user is a participant of the game
+    - Validate the Game is not already completed
+    - update user_selection in Answer entity.
+    - removed user_selection from other answers to the same question
 
 ---
 
