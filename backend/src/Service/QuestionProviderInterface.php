@@ -13,5 +13,5 @@ interface QuestionProviderInterface
      *
      * @return QuestionDTO[]
      */
-    public function fetchQuestions(Round $round, Difficulty $difficulty): array;
+    public function fetchQuestions(Round $round, Difficulty $difficulty, int $amount = 10): array;
 }

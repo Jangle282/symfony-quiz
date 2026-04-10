@@ -288,6 +288,7 @@ Create abstraction layer for question sources:
 
 ### 5.1 Game Management Endpoints
 - Start new game (`POST /api/games`)
+  - authenticated route with default throttling.
   - Create Game entity
   - Create UserGame entity for creator (role: host)
   - Create Round entity (1 round, general knowledge)
