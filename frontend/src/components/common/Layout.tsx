@@ -1,0 +1,34 @@
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+
+export default function Layout() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    navigate('/login');
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <div className="navbar bg-base-200">
+        <div className="flex-1">
+          <Link to="/lobby" className="btn btn-ghost text-xl">
+            Pub Quiz
+          </Link>
+        </div>
+        <div className="flex-none gap-2">
+          <Link to="/user" className="btn btn-ghost btn-sm">
+            Profile
+          </Link>
+          <button onClick={handleLogout} className="btn btn-ghost btn-sm">
+            Logout
+          </button>
+        </div>
+      </div>
+      <main className="flex-1">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
