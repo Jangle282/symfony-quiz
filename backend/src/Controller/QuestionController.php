@@ -7,6 +7,7 @@ use App\Entity\Game;
 use App\Exception\NotFoundException;
 use App\Service\QuestionNavigationService;
 use Doctrine\ORM\EntityManagerInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -19,6 +20,50 @@ class QuestionController extends ApiController
 
     #[Route('/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/next', name: 'api_game_next_question', methods: ['GET'])]
     #[RateLimited('api_general')]
+    #[OA\Get(
+        path: '/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/next',
+        summary: 'Get next question in a round',
+        security: [['Bearer' => []]],
+        tags: ['Questions'],
+        parameters: [
+            new OA\Parameter(name: 'gameId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'roundId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'questionId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Next question or null if no more questions',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'question',
+                            type: 'object',
+                            nullable: true,
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'question_text', type: 'string'),
+                                new OA\Property(
+                                    property: 'answers',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                            new OA\Property(property: 'answer_text', type: 'string'),
+                                            new OA\Property(property: 'user_selected', type: 'boolean'),
+                                        ]
+                                    )
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'Game, round, or question not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function nextQuestion(
         string $gameId,
         string $roundId,
@@ -39,6 +84,50 @@ class QuestionController extends ApiController
 
     #[Route('/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/previous', name: 'api_game_previous_question', methods: ['GET'])]
     #[RateLimited('api_general')]
+    #[OA\Get(
+        path: '/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/previous',
+        summary: 'Get previous question in a round',
+        security: [['Bearer' => []]],
+        tags: ['Questions'],
+        parameters: [
+            new OA\Parameter(name: 'gameId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'roundId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'questionId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Previous question or null if at the first question',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'question',
+                            type: 'object',
+                            nullable: true,
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'question_text', type: 'string'),
+                                new OA\Property(
+                                    property: 'answers',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                            new OA\Property(property: 'answer_text', type: 'string'),
+                                            new OA\Property(property: 'user_selected', type: 'boolean'),
+                                        ]
+                                    )
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'Game, round, or question not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function previousQuestion(
         string $gameId,
         string $roundId,

@@ -6,6 +6,7 @@ use App\Attribute\RateLimited;
 use App\Entity\Game;
 use App\Service\GameService;
 use App\Service\QuestionService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,66 @@ class GameController extends ApiController
 {
     #[Route('/api/games', name: 'api_game_create', methods: ['POST'])]
     #[RateLimited('api_general')]
+    #[OA\Post(
+        path: '/api/games',
+        summary: 'Create a new game',
+        security: [['Bearer' => []]],
+        tags: ['Games'],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'difficulty', type: 'string', enum: ['easy', 'medium', 'hard'], example: 'medium'),
+                    new OA\Property(property: 'name', type: 'string', nullable: true, example: 'Friday Quiz'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Game created',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'name', type: 'string', nullable: true),
+                        new OA\Property(property: 'difficulty', type: 'string'),
+                        new OA\Property(
+                            property: 'round',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'round_number', type: 'integer'),
+                                new OA\Property(property: 'category', type: 'string'),
+                            ]
+                        ),
+                        new OA\Property(
+                            property: 'first_question',
+                            type: 'object',
+                            nullable: true,
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'question_text', type: 'string'),
+                                new OA\Property(
+                                    property: 'answers',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                            new OA\Property(property: 'answer_text', type: 'string'),
+                                        ]
+                                    )
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Invalid difficulty'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+            new OA\Response(response: 500, description: 'Server error'),
+        ]
+    )]
     public function create(
         Request $request,
         GameService $gameService,
@@ -66,6 +127,21 @@ class GameController extends ApiController
 
     #[Route('/api/games/{id}', name: 'api_game_delete', methods: ['DELETE'])]
     #[RateLimited('api_general')]
+    #[OA\Delete(
+        path: '/api/games/{id}',
+        summary: 'Delete a game',
+        security: [['Bearer' => []]],
+        tags: ['Games'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'Game deleted'),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'Game not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function delete(Game $game, GameService $gameService): Response
     {
         $this->denyAccessUnlessGranted('GAME_DELETE', $game);
@@ -75,6 +151,67 @@ class GameController extends ApiController
 
     #[Route('/api/games/{id}', name: 'api_game_show', methods: ['GET'])]
     #[RateLimited('api_general')]
+    #[OA\Get(
+        path: '/api/games/{id}',
+        summary: 'Get game details',
+        security: [['Bearer' => []]],
+        tags: ['Games'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Game details',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'name', type: 'string', nullable: true),
+                        new OA\Property(property: 'difficulty', type: 'string'),
+                        new OA\Property(property: 'total_score', type: 'integer'),
+                        new OA\Property(property: 'started_at', type: 'string', format: 'date-time'),
+                        new OA\Property(property: 'completed_at', type: 'string', format: 'date-time', nullable: true),
+                        new OA\Property(
+                            property: 'rounds',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'round_number', type: 'integer'),
+                                    new OA\Property(property: 'category', type: 'string'),
+                                    new OA\Property(property: 'total_questions', type: 'integer'),
+                                    new OA\Property(property: 'answered_questions', type: 'integer'),
+                                ]
+                            )
+                        ),
+                        new OA\Property(
+                            property: 'current_question',
+                            type: 'object',
+                            nullable: true,
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'question_text', type: 'string'),
+                                new OA\Property(
+                                    property: 'answers',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                            new OA\Property(property: 'answer_text', type: 'string'),
+                                            new OA\Property(property: 'user_selected', type: 'boolean'),
+                                        ]
+                                    )
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'Game not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function show(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
@@ -83,6 +220,32 @@ class GameController extends ApiController
 
     #[Route('/api/games/{id}/complete', name: 'api_game_complete', methods: ['POST'])]
     #[RateLimited('api_general')]
+    #[OA\Post(
+        path: '/api/games/{id}/complete',
+        summary: 'Complete a game',
+        security: [['Bearer' => []]],
+        tags: ['Games'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Game completed',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Game completed.'),
+                        new OA\Property(property: 'game_id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'total_score', type: 'integer'),
+                        new OA\Property(property: 'completed_at', type: 'string', format: 'date-time'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Game is already completed'),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function complete(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
@@ -97,6 +260,44 @@ class GameController extends ApiController
 
     #[Route('/api/games/{id}/results', name: 'api_game_results', methods: ['GET'])]
     #[RateLimited('api_general')]
+    #[OA\Get(
+        path: '/api/games/{id}/results',
+        summary: 'Get game results',
+        security: [['Bearer' => []]],
+        tags: ['Games'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Game results',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'game_id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'total_score', type: 'integer'),
+                        new OA\Property(property: 'total_questions', type: 'integer'),
+                        new OA\Property(
+                            property: 'questions',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'question_id', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'question_text', type: 'string'),
+                                    new OA\Property(property: 'correct_answer', type: 'string', nullable: true),
+                                    new OA\Property(property: 'selected_answer', type: 'string', nullable: true),
+                                    new OA\Property(property: 'is_correct', type: 'boolean'),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'Game not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
     public function results(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
