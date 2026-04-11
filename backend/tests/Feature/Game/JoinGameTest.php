@@ -11,6 +11,7 @@ use App\Tests\Factory\QuestionFactory;
 use App\Tests\Factory\RoundFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
+use App\Entity\UserGameRole;
 
 class JoinGameTest extends ApiTestCase
 {
@@ -19,7 +20,7 @@ class JoinGameTest extends ApiTestCase
         $host = UserFactory::createOne();
         $player = UserFactory::createOne();
         $game = GameFactory::createOne(['createdBy' => $host]);
-        UserGameFactory::createOne(['user' => $host, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $host, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($player);
 
@@ -43,7 +44,7 @@ class JoinGameTest extends ApiTestCase
     {
         $user = UserFactory::createOne();
         $game = GameFactory::createOne(['createdBy' => $user]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($user);
 

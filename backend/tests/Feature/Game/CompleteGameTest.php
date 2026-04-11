@@ -12,6 +12,7 @@ use App\Tests\Factory\QuestionFactory;
 use App\Tests\Factory\RoundFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
+use App\Entity\UserGameRole;
 
 class CompleteGameTest extends ApiTestCase
 {
@@ -20,8 +21,8 @@ class CompleteGameTest extends ApiTestCase
         $user = UserFactory::createOne();
         $difficulty = DifficultyFactory::createOne(['name' => 'medium']);
         $category = CategoryFactory::createOne(['name' => 'General Knowledge']);
-        $game = GameFactory::createOne(['createdBy' => $user, 'difficulty' => $difficulty, 'totalScore' => 0]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        $game = GameFactory::createOne(['createdBy' => $user, 'difficulty' => $difficulty]);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
 
@@ -62,7 +63,6 @@ class CompleteGameTest extends ApiTestCase
         $em->clear();
         $updatedGame = $em->find(Game::class, $game->getId());
         $this->assertNotNull($updatedGame->getCompletedAt());
-        $this->assertSame(2, $updatedGame->getTotalScore());
     }
 
     public function testCompleteGameFailsWhenAlreadyCompleted(): void
@@ -74,7 +74,7 @@ class CompleteGameTest extends ApiTestCase
             'difficulty' => $difficulty,
             'completedAt' => new \DateTimeImmutable(),
         ]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($user);
 
@@ -98,7 +98,7 @@ class CompleteGameTest extends ApiTestCase
         $other = UserFactory::createOne();
         $difficulty = DifficultyFactory::createOne(['name' => 'medium']);
         $game = GameFactory::createOne(['createdBy' => $owner, 'difficulty' => $difficulty]);
-        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($other);
 

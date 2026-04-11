@@ -11,6 +11,7 @@ use App\Tests\Factory\QuestionFactory;
 use App\Tests\Factory\RoundFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
+use App\Entity\UserGameRole;
 
 class ShowGameTest extends ApiTestCase
 {
@@ -20,7 +21,7 @@ class ShowGameTest extends ApiTestCase
         $difficulty = DifficultyFactory::createOne(['name' => 'medium']);
         $category = CategoryFactory::createOne(['name' => 'General Knowledge']);
         $game = GameFactory::createOne(['createdBy' => $user, 'difficulty' => $difficulty]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
         $question1 = QuestionFactory::createOne(['round' => $round, 'questionText' => 'Question 1?']);
@@ -57,7 +58,7 @@ class ShowGameTest extends ApiTestCase
         $owner = UserFactory::createOne();
         $other = UserFactory::createOne();
         $game = GameFactory::createOne(['createdBy' => $owner]);
-        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($other);
 
@@ -90,7 +91,7 @@ class ShowGameTest extends ApiTestCase
         $difficulty = DifficultyFactory::createOne(['name' => 'easy']);
         $category = CategoryFactory::createOne(['name' => 'Science']);
         $game = GameFactory::createOne(['createdBy' => $user, 'difficulty' => $difficulty]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
         $question1 = QuestionFactory::createOne(['round' => $round, 'questionText' => 'Q1?']);

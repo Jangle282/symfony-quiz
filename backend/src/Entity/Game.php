@@ -31,9 +31,6 @@ class Game
     private ?User $createdBy = null;
 
     #[ORM\Column]
-    private ?int $totalScore = null;
-
-    #[ORM\Column]
     private ?\DateTimeImmutable $startedAt = null;
 
     #[ORM\Column(nullable: true)]
@@ -92,18 +89,6 @@ class Game
     public function setDifficulty(?Difficulty $difficulty): static
     {
         $this->difficulty = $difficulty;
-
-        return $this;
-    }
-
-    public function getTotalScore(): ?int
-    {
-        return $this->totalScore;
-    }
-
-    public function setTotalScore(int $totalScore): static
-    {
-        $this->totalScore = $totalScore;
 
         return $this;
     }

@@ -2,21 +2,29 @@
 
 namespace App\Service;
 
+use App\DTO\GameResultQuestionDTO;
+use App\DTO\GameResultsDTO;
 use App\Entity\Category;
 use App\Entity\Difficulty;
 use App\Entity\Game;
 use App\Entity\Question;
 use App\Entity\Round;
 use App\Entity\UserGame;
+use App\Entity\UserGameRole;
 use App\Exception\GameException;
+use App\Repository\GameRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class GameService
 {
-    public function __construct(
-        private readonly EntityManagerInterface $entityManager
-    ) {
+    private EntityManagerInterface $entityManager;
+    private GameRepository $gameRepository;
+
+    public function __construct(EntityManagerInterface $entityManager, GameRepository $gameRepository)
+    {
+        $this->entityManager = $entityManager;
+        $this->gameRepository = $gameRepository;
     }
 
     public function createGame(UserInterface $user, string $difficultyName = 'medium', ?string $gameName = null): array
@@ -31,10 +39,29 @@ class GameService
             throw GameException::categoryNotFound();
         }
 
-        $game = $this->entityManager->getRepository(Game::class)->create($user, $difficulty, $category, $gameName);
-        $userGame = $this->entityManager->getRepository(UserGame::class)->create($user, $game, 'host');
-        $round = $this->entityManager->getRepository(Round::class)->create($game, $category);
-        
+        $game = new Game();
+        $game->setName($gameName);
+        $game->setDifficulty($difficulty);
+        $game->setCreatedBy($user);
+        $game->setStartedAt(new \DateTimeImmutable());
+        $this->entityManager->persist($game);
+
+        $userGame = new UserGame();
+        $userGame->setUser($user);
+        $userGame->setGame($game);
+        $userGame->setRole(UserGameRole::Host);
+        $this->entityManager->persist($userGame);
+        $game->addUserGame($userGame);
+
+        $round = new Round();
+        $round->setGame($game);
+        $round->setCategory($category);
+        $round->setRoundNumber(1);
+        $this->entityManager->persist($round);
+        $game->addRound($round);
+
+        $this->entityManager->flush();
+
         return [
             'game' => $game,
             'round' => $round,
@@ -52,12 +79,14 @@ class GameService
 
     public function getGameData(Game $game): array
     {
+        $game = $this->gameRepository->getGameWithRoundsAndQuestions($game->getId()) ?? $game;
+
         $rounds = [];
         $currentQuestion = null;
 
         foreach ($game->getRounds() as $round) {
-            $questions = $this->entityManager->getRepository(Question::class)
-                ->findBy(['round' => $round], ['id' => 'ASC']);
+            $questions = $round->getQuestions()->toArray();
+            usort($questions, fn($a, $b) => strcmp($a->getId()->toString(), $b->getId()->toString()));
 
             $totalQuestions = count($questions);
             $answeredQuestions = 0;
@@ -107,7 +136,7 @@ class GameService
             'id' => $game->getId()->toString(),
             'name' => $game->getName(),
             'difficulty' => $game->getDifficulty()->getName(),
-            'total_score' => $game->getTotalScore(),
+            'total_score' => $this->calculateTotalScore($game),
             'started_at' => $game->getStartedAt()->format(DATE_ATOM),
             'completed_at' => $game->getCompletedAt()?->format(DATE_ATOM),
             'rounds' => $rounds,
@@ -132,7 +161,6 @@ class GameService
             }
         }
 
-        $game->setTotalScore($totalScore);
         $game->setCompletedAt(new \DateTimeImmutable());
         $this->entityManager->flush();
 
@@ -143,12 +171,14 @@ class GameService
         ];
     }
 
-    public function getResults(Game $game): array
+    public function getResults(Game $game): GameResultsDTO
     {
+        $game = $this->gameRepository->getGameWithRoundsAndQuestions($game->getId()) ?? $game;
+
         $questions = [];
         foreach ($game->getRounds() as $round) {
-            $orderedQuestions = $this->entityManager->getRepository(Question::class)
-                ->findBy(['round' => $round], ['id' => 'ASC']);
+            $orderedQuestions = $round->getQuestions()->toArray();
+            usort($orderedQuestions, fn($a, $b) => strcmp($a->getId()->toString(), $b->getId()->toString()));
 
             foreach ($orderedQuestions as $question) {
                 $correctAnswer = null;
@@ -165,21 +195,37 @@ class GameService
 
                 $isCorrect = $correctAnswer !== null && $correctAnswer === $selectedAnswer;
 
-                $questions[] = [
-                    'question_id' => $question->getId()->toString(),
-                    'question_text' => $question->getQuestionText(),
-                    'correct_answer' => $correctAnswer,
-                    'selected_answer' => $selectedAnswer,
-                    'is_correct' => $isCorrect,
-                ];
+                $questions[] = new GameResultQuestionDTO(
+                    questionId: $question->getId()->toString(),
+                    questionText: $question->getQuestionText(),
+                    correctAnswer: $correctAnswer,
+                    selectedAnswer: $selectedAnswer,
+                    isCorrect: $isCorrect,
+                );
             }
         }
 
-        return [
-            'game_id' => $game->getId()->toString(),
-            'total_score' => $game->getTotalScore(),
-            'total_questions' => count($questions),
-            'questions' => $questions,
-        ];
+        return new GameResultsDTO(
+            gameId: $game->getId()->toString(),
+            totalScore: $this->calculateTotalScore($game),
+            totalQuestions: count($questions),
+            questions: $questions,
+        );
+    }
+
+    public function calculateTotalScore(Game $game): int
+    {
+        $totalScore = 0;
+        foreach ($game->getRounds() as $round) {
+            foreach ($round->getQuestions() as $question) {
+                foreach ($question->getAnswers() as $answer) {
+                    if ($answer->isUserSelected() && $answer->isCorrect()) {
+                        $totalScore++;
+                    }
+                }
+            }
+        }
+
+        return $totalScore;
     }
 }

@@ -9,6 +9,7 @@ use App\Entity\Game;
 use App\Entity\Question;
 use App\Entity\Round;
 use App\Entity\UserGame;
+use App\Entity\UserGameRole;
 use App\Service\QuestionProviderInterface;
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\CategoryFactory;
@@ -95,13 +96,12 @@ class CreateGameTest extends ApiTestCase
         $game = $em->find(Game::class, $response['id']);
         $this->assertNotNull($game);
         $this->assertSame('My Quiz', $game->getName());
-        $this->assertSame(0, $game->getTotalScore());
         $this->assertNull($game->getCompletedAt());
 
         // Verify UserGame was created with host role
         $userGames = $em->getRepository(UserGame::class)->findBy(['game' => $game]);
         $this->assertCount(1, $userGames);
-        $this->assertSame('host', $userGames[0]->getRole());
+        $this->assertSame(UserGameRole::Host, $userGames[0]->getRole());
 
         // Verify round and questions
         $rounds = $em->getRepository(Round::class)->findBy(['game' => $game]);

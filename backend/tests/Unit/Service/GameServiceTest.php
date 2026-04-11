@@ -3,39 +3,32 @@
 namespace App\Tests\Unit\Service;
 
 use App\Entity\Game;
-use App\Tests\Factory\UserFactory;
+use App\Service\GameService;
 use App\Tests\Factory\CategoryFactory;
 use App\Tests\Factory\DifficultyFactory;
-use App\Service\GameService;
+use App\Tests\Factory\UserFactory;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Doctrine\ORM\EntityManagerInterface;
+use Zenstruck\Foundry\Test\Factories;
 
 class GameServiceTest extends KernelTestCase
 {
-    private EntityManagerInterface $entityManager;
+    use Factories;
+
     private GameService $gameService;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
-        $this->gameService = new GameService($this->entityManager);
-        $this->seedReferenceData();
-    }
-
-    private function seedReferenceData(): void
-    {
-        CategoryFactory::createOne(['name' => 'General Knowledge']);
-        DifficultyFactory::createOne(['name' => 'easy']);
-        DifficultyFactory::createOne(['name' => 'medium']);
-        DifficultyFactory::createOne(['name' => 'hard']);
+        $this->gameService = static::getContainer()->get(GameService::class);
     }
 
     public function testCreateGame(): void
     {
-        $user = UserFactory::createOne()->_real();
+        DifficultyFactory::createOne(['name' => 'medium']);
+        CategoryFactory::createOne(['name' => 'General Knowledge']);
+        $user = UserFactory::createOne();
 
-        $result = $this->gameService->createGame($user, 'medium', 'Test Game');
+        $result = $this->gameService->createGame($user->_real(), 'medium', 'Test Game');
         $game = $result['game'];
         $this->assertNotNull($game->getId());
         $this->assertEquals('Test Game', $game->getName());
@@ -45,14 +38,17 @@ class GameServiceTest extends KernelTestCase
 
     public function testDeleteGame(): void
     {
-        $user = UserFactory::createOne()->_real();
-        $result = $this->gameService->createGame($user, 'medium', 'Delete Me');
+        DifficultyFactory::createOne(['name' => 'medium']);
+        CategoryFactory::createOne(['name' => 'General Knowledge']);
+        $user = UserFactory::createOne();
+
+        $result = $this->gameService->createGame($user->_real(), 'medium', 'Delete Me');
         $game = $result['game'];
         $gameId = $game->getId();
         $this->gameService->deleteGame($game);
-        $found = $this->entityManager->getRepository(Game::class)->find($gameId);
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $em->clear();
+        $found = $em->getRepository(Game::class)->find($gameId);
         $this->assertNull($found);
     }
-
-    // ... More tests for completeGame, getGameData, getResults, error cases ...
 }

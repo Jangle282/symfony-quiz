@@ -11,6 +11,7 @@ use App\Tests\Factory\QuestionFactory;
 use App\Tests\Factory\RoundFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
+use App\Entity\UserGameRole;
 
 class GameResultsTest extends ApiTestCase
 {
@@ -22,10 +23,9 @@ class GameResultsTest extends ApiTestCase
         $game = GameFactory::createOne([
             'createdBy' => $user,
             'difficulty' => $difficulty,
-            'totalScore' => 2,
             'completedAt' => new \DateTimeImmutable(),
         ]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
 
@@ -58,7 +58,7 @@ class GameResultsTest extends ApiTestCase
 
         $response = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertSame($game->getId()->toString(), $response['game_id']);
-        $this->assertSame(2, $response['total_score']);
+        $this->assertSame(1, $response['total_score']);
         $this->assertSame(3, $response['total_questions']);
         $this->assertCount(3, $response['questions']);
 
@@ -82,7 +82,7 @@ class GameResultsTest extends ApiTestCase
             'difficulty' => $difficulty,
             'completedAt' => new \DateTimeImmutable(),
         ]);
-        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $owner, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($other);
 
@@ -117,10 +117,9 @@ class GameResultsTest extends ApiTestCase
         $game = GameFactory::createOne([
             'createdBy' => $user,
             'difficulty' => $difficulty,
-            'totalScore' => 1,
             'completedAt' => new \DateTimeImmutable(),
         ]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
 

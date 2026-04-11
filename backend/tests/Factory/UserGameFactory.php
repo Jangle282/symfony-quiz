@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\UserGame;
+use App\Entity\UserGameRole;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -20,7 +21,7 @@ final class UserGameFactory extends PersistentProxyObjectFactory
         return [
             'user' => UserFactory::new(),
             'game' => GameFactory::new(),
-            'role' => 'owner',
+            'role' => UserGameRole::Host,
         ];
     }
 }

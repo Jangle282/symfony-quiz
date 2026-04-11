@@ -2,6 +2,7 @@
 
 namespace App\Tests\Feature\User;
 
+use App\Entity\UserGameRole;
 use App\Tests\ApiTestCase;
 use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
@@ -21,10 +22,9 @@ class GetUserTest extends ApiTestCase
         $user = UserFactory::createOne();
         $game = GameFactory::createOne([
             'createdBy' => $user,
-            'totalScore' => 85,
             'completedAt' => new \DateTimeImmutable(),
         ]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'owner']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $token = $this->generateToken($user);
 
@@ -58,10 +58,10 @@ class GetUserTest extends ApiTestCase
         $returnedGame = $data['games'][0];
         $this->assertArrayHasKey('id', $returnedGame);
         $this->assertArrayHasKey('role', $returnedGame);
-        $this->assertSame('owner', $returnedGame['role']);
+        $this->assertSame('host', $returnedGame['role']);
         $this->assertArrayHasKey('joinedAt', $returnedGame);
         $this->assertArrayHasKey('totalScore', $returnedGame);
-        $this->assertSame(85, $returnedGame['totalScore']);
+        $this->assertSame(0, $returnedGame['totalScore']);
         $this->assertArrayHasKey('startedAt', $returnedGame);
         $this->assertArrayHasKey('completedAt', $returnedGame);
     }

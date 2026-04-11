@@ -11,6 +11,7 @@ use App\Tests\Factory\QuestionFactory;
 use App\Tests\Factory\RoundFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserGameFactory;
+use App\Entity\UserGameRole;
 
 class NextQuestionTest extends ApiTestCase
 {
@@ -19,7 +20,7 @@ class NextQuestionTest extends ApiTestCase
         $difficulty = DifficultyFactory::createOne(['name' => 'medium']);
         $category = CategoryFactory::createOne(['name' => 'General Knowledge']);
         $game = GameFactory::createOne(['createdBy' => $user, 'difficulty' => $difficulty]);
-        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => 'host']);
+        UserGameFactory::createOne(['user' => $user, 'game' => $game, 'role' => UserGameRole::Host]);
 
         $round = RoundFactory::createOne(['game' => $game, 'category' => $category, 'roundNumber' => 1]);
 

@@ -4,20 +4,20 @@ namespace App\Controller;
 
 use App\Attribute\RateLimited;
 use App\Entity\Game;
+use App\Service\GameService;
 use App\Service\QuestionService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class GameController extends AbstractController
+class GameController extends ApiController
 {
     #[Route('/api/games', name: 'api_game_create', methods: ['POST'])]
     #[RateLimited('api_general')]
     public function create(
         Request $request,
-        \App\Service\GameService $gameService,
+        GameService $gameService,
         QuestionService $questionService,
     ): JsonResponse {
         $user = $this->getUser();
@@ -25,11 +25,7 @@ class GameController extends AbstractController
         $difficultyName = $data['difficulty'] ?? 'medium';
         $gameName = $data['name'] ?? null;
 
-        try {
-            $result = $gameService->createGame($user, $difficultyName, $gameName);
-        } catch (\App\Exception\GameException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
-        }
+        $result = $gameService->createGame($user, $difficultyName, $gameName);
 
         $game = $result['game'];
         $round = $result['round'];
@@ -70,7 +66,7 @@ class GameController extends AbstractController
 
     #[Route('/api/games/{id}', name: 'api_game_delete', methods: ['DELETE'])]
     #[RateLimited('api_general')]
-    public function delete(Game $game, Request $request, \App\Service\GameService $gameService): Response
+    public function delete(Game $game, GameService $gameService): Response
     {
         $this->denyAccessUnlessGranted('GAME_DELETE', $game);
         $gameService->deleteGame($game);
@@ -79,23 +75,18 @@ class GameController extends AbstractController
 
     #[Route('/api/games/{id}', name: 'api_game_show', methods: ['GET'])]
     #[RateLimited('api_general')]
-    public function show(Game $game, \App\Service\GameService $gameService): JsonResponse
+    public function show(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
-        $data = $gameService->getGameData($game);
-        return $this->json($data);
+        return $this->json($gameService->getGameData($game));
     }
 
     #[Route('/api/games/{id}/complete', name: 'api_game_complete', methods: ['POST'])]
     #[RateLimited('api_general')]
-    public function complete(Game $game, \App\Service\GameService $gameService): JsonResponse
+    public function complete(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
-        try {
-            $result = $gameService->completeGame($game);
-        } catch (\App\Exception\GameException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
-        }
+        $result = $gameService->completeGame($game);
         return $this->json([
             'message' => 'Game completed.',
             'game_id' => $result['game_id'],
@@ -106,10 +97,21 @@ class GameController extends AbstractController
 
     #[Route('/api/games/{id}/results', name: 'api_game_results', methods: ['GET'])]
     #[RateLimited('api_general')]
-    public function results(Game $game, \App\Service\GameService $gameService): JsonResponse
+    public function results(Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
-        $data = $gameService->getResults($game);
-        return $this->json($data);
+        $results = $gameService->getResults($game);
+        return $this->json([
+            'game_id' => $results->gameId,
+            'total_score' => $results->totalScore,
+            'total_questions' => $results->totalQuestions,
+            'questions' => array_map(fn($q) => [
+                'question_id' => $q->questionId,
+                'question_text' => $q->questionText,
+                'correct_answer' => $q->correctAnswer,
+                'selected_answer' => $q->selectedAnswer,
+                'is_correct' => $q->isCorrect,
+            ], $results->questions),
+        ]);
     }
 }
