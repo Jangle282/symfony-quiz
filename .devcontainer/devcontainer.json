@@ -11,7 +11,8 @@
                 "phpunit.config": "phpunit.dist.xml"
             },
             "extensions": [
-                "DEVSENSE.phptools-vscode"
+                "DEVSENSE.phptools-vscode",
+                "GitHub.copilot-chat"
             ]
         }
     },
