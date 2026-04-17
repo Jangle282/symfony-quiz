@@ -1,11 +1,12 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
+  async function handleLogout() {
+    await logout();
     navigate('/login');
   }
 
@@ -18,6 +19,11 @@ export default function Layout() {
           </Link>
         </div>
         <div className="flex-none gap-2">
+          {user && (
+            <span className="text-sm text-base-content/70">
+              {user.username}
+            </span>
+          )}
           <Link to="/user" className="btn btn-ghost btn-sm">
             Profile
           </Link>
