@@ -1,5 +1,10 @@
 import axios from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import type { RefreshResponse } from '../types';
+
+interface RetriableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
 
@@ -14,7 +19,7 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.set('Authorization', `Bearer ${token}`);
   }
   return config;
 });
@@ -39,7 +44,11 @@ function processQueue(error: unknown, token: string | null = null) {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetriableRequestConfig | undefined;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
 
     if (
       error.response?.status === 401 &&
@@ -52,7 +61,7 @@ api.interceptors.response.use(
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+          originalRequest.headers.set('Authorization', `Bearer ${token}`);
           return api(originalRequest);
         });
       }
@@ -81,7 +90,7 @@ api.interceptors.response.use(
 
         processQueue(null, data.token);
 
-        originalRequest.headers.Authorization = `Bearer ${data.token}`;
+        originalRequest.headers.set('Authorization', `Bearer ${data.token}`);
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
