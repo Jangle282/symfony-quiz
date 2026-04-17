@@ -10,7 +10,6 @@ use App\Service\UserService;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/user')]
@@ -73,11 +72,6 @@ class UserController extends ApiController
     )]
     public function profile(string $id, UserRepository $userRepository): JsonResponse
     {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $user = $userRepository->find($id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');
@@ -135,11 +129,6 @@ class UserController extends ApiController
     )]
     public function updateUsername(Request $request, string $id, UserRepository $userRepository): JsonResponse
     {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $user = $userRepository->find($id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');
@@ -195,11 +184,6 @@ class UserController extends ApiController
     )]
     public function updatePassword(Request $request, string $id, UserRepository $userRepository): JsonResponse
     {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $user = $userRepository->find($id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');

@@ -9,8 +9,8 @@ use App\Entity\UserGameRole;
 use App\Service\UserGameService;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class UserGameController extends ApiController
 {
@@ -46,13 +46,8 @@ class UserGameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function join(Game $game): JsonResponse
+    public function join(#[CurrentUser] User $user, Game $game): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $userGame = $this->userGameService->joinGame($user, $game);
 
         return $this->json([

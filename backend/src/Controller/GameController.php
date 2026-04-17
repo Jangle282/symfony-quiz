@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Attribute\RateLimited;
 use App\Entity\Game;
+use App\Entity\User;
 use App\Service\GameService;
 use App\Service\QuestionService;
 use OpenApi\Attributes as OA;
@@ -11,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class GameController extends ApiController
 {
@@ -77,11 +79,11 @@ class GameController extends ApiController
         ]
     )]
     public function create(
+        #[CurrentUser] User $user,
         Request $request,
         GameService $gameService,
         QuestionService $questionService,
     ): JsonResponse {
-        $user = $this->getUser();
         $data = $request->toArray();
         $difficultyName = $data['difficulty'] ?? 'medium';
         $gameName = $data['name'] ?? null;
