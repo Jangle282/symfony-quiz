@@ -4,13 +4,16 @@ namespace App\Controller;
 
 use App\Attribute\RateLimited;
 use App\Entity\Game;
+use App\Entity\User;
 use App\Service\GameService;
 use App\Service\QuestionService;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class GameController extends ApiController
 {
@@ -77,11 +80,11 @@ class GameController extends ApiController
         ]
     )]
     public function create(
+        #[CurrentUser] User $user,
         Request $request,
         GameService $gameService,
         QuestionService $questionService,
     ): JsonResponse {
-        $user = $this->getUser();
         $data = $request->toArray();
         $difficultyName = $data['difficulty'] ?? 'medium';
         $gameName = $data['name'] ?? null;
@@ -125,15 +128,15 @@ class GameController extends ApiController
         ], Response::HTTP_CREATED);
     }
 
-    #[Route('/api/games/{id}', name: 'api_game_delete', methods: ['DELETE'])]
+    #[Route('/api/games/{game_id}', name: 'api_game_delete', methods: ['DELETE'])]
     #[RateLimited('api_general')]
     #[OA\Delete(
-        path: '/api/games/{id}',
+        path: '/api/games/{game_id}',
         summary: 'Delete a game',
         security: [['Bearer' => []]],
         tags: ['Games'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(response: 204, description: 'Game deleted'),
@@ -142,22 +145,22 @@ class GameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function delete(Game $game, GameService $gameService): Response
+    public function delete(#[MapEntity(id: 'game_id')] Game $game, GameService $gameService): Response
     {
         $this->denyAccessUnlessGranted('GAME_DELETE', $game);
         $gameService->deleteGame($game);
         return new Response(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/games/{id}', name: 'api_game_show', methods: ['GET'])]
+    #[Route('/api/games/{game_id}', name: 'api_game_show', methods: ['GET'])]
     #[RateLimited('api_general')]
     #[OA\Get(
-        path: '/api/games/{id}',
+        path: '/api/games/{game_id}',
         summary: 'Get game details',
         security: [['Bearer' => []]],
         tags: ['Games'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -212,21 +215,21 @@ class GameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function show(Game $game, GameService $gameService): JsonResponse
+    public function show(#[MapEntity(id: 'game_id')] Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
         return $this->json($gameService->getGameData($game));
     }
 
-    #[Route('/api/games/{id}/complete', name: 'api_game_complete', methods: ['POST'])]
+    #[Route('/api/games/{game_id}/complete', name: 'api_game_complete', methods: ['POST'])]
     #[RateLimited('api_general')]
     #[OA\Post(
-        path: '/api/games/{id}/complete',
+        path: '/api/games/{game_id}/complete',
         summary: 'Complete a game',
         security: [['Bearer' => []]],
         tags: ['Games'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -246,7 +249,7 @@ class GameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function complete(Game $game, GameService $gameService): JsonResponse
+    public function complete(#[MapEntity(id: 'game_id')] Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
         $result = $gameService->completeGame($game);
@@ -258,15 +261,15 @@ class GameController extends ApiController
         ]);
     }
 
-    #[Route('/api/games/{id}/results', name: 'api_game_results', methods: ['GET'])]
+    #[Route('/api/games/{game_id}/results', name: 'api_game_results', methods: ['GET'])]
     #[RateLimited('api_general')]
     #[OA\Get(
-        path: '/api/games/{id}/results',
+        path: '/api/games/{game_id}/results',
         summary: 'Get game results',
         security: [['Bearer' => []]],
         tags: ['Games'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -298,7 +301,7 @@ class GameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function results(Game $game, GameService $gameService): JsonResponse
+    public function results(#[MapEntity(id: 'game_id')] Game $game, GameService $gameService): JsonResponse
     {
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
         $results = $gameService->getResults($game);

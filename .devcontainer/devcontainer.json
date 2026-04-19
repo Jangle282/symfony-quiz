@@ -8,7 +8,7 @@
         "vscode": {
             "settings": {
                 "php.executablePath": "/usr/local/bin/php",
-                "phpunit.config": "phpunit.dist.xml"
+                "phpunit.config": "backend/phpunit.dist.xml"
             },
             "extensions": [
                 "DEVSENSE.phptools-vscode",

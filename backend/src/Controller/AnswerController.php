@@ -18,18 +18,18 @@ class AnswerController extends ApiController
     ) {
     }
 
-    #[Route('/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/answers/{answerId}/select', name: 'api_game_select_answer', methods: ['POST'])]
+    #[Route('/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/answers/{answer_id}/select', name: 'api_game_select_answer', methods: ['POST'])]
     #[RateLimited('api_general')]
     #[OA\Post(
-        path: '/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/answers/{answerId}/select',
+        path: '/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/answers/{answer_id}/select',
         summary: 'Select an answer for a question',
         security: [['Bearer' => []]],
         tags: ['Answers'],
         parameters: [
-            new OA\Parameter(name: 'gameId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'roundId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'questionId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'answerId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'round_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'question_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'answer_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -50,20 +50,20 @@ class AnswerController extends ApiController
         ]
     )]
     public function selectAnswer(
-        string $gameId,
-        string $roundId,
-        string $questionId,
-        string $answerId,
+        string $game_id,
+        string $round_id,
+        string $question_id,
+        string $answer_id,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
-        $game = $entityManager->find(Game::class, $gameId);
+        $game = $entityManager->find(Game::class, $game_id);
         if (!$game) {
             throw new NotFoundException('Game not found.');
         }
 
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
 
-        $result = $this->answerService->selectAnswer($game, $roundId, $questionId, $answerId);
+        $result = $this->answerService->selectAnswer($game, $round_id, $question_id, $answer_id);
 
         return $this->json($result);
     }

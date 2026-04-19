@@ -34,6 +34,7 @@ class Round
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\OneToMany(mappedBy: 'round', targetEntity: Question::class, cascade: ["remove"])]
+    #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $questions;
 
     public function __construct()

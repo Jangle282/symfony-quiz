@@ -8,6 +8,7 @@ use App\Service\AuthService;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[Route('/api')]
 class LogoutController extends ApiController
@@ -28,14 +29,9 @@ class LogoutController extends ApiController
             new OA\Response(response: 401, description: 'Unauthorized'),
         ]
     )]
-    public function logout(): Response
+    public function logout(#[CurrentUser] User $user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_USER');
-
-        $user = $this->getUser();
-        if ($user instanceof User) {
-            $this->authService->logout($user);
-        }
+        $this->authService->logout($user);
 
         return new Response(null, Response::HTTP_NO_CONTENT);
     }

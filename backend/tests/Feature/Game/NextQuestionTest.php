@@ -65,6 +65,7 @@ class NextQuestionTest extends ApiTestCase
         $this->assertNotNull($response['question']);
         $this->assertSame($secondQuestion->getId()->toString(), $response['question']['id']);
         $this->assertArrayHasKey('answers', $response['question']);
+        $this->assertCount(2, $response['question']['answers']);
 
         // Verify is_correct is NOT exposed
         foreach ($response['question']['answers'] as $answer) {

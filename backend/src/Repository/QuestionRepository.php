@@ -21,8 +21,6 @@ class QuestionRepository extends ServiceEntityRepository
     public function findNextInRound(Round $round, UuidInterface $afterQuestionId): ?Question
     {
         return $this->createQueryBuilder('q')
-            ->leftJoin('q.answers', 'a')
-            ->addSelect('a')
             ->where('q.round = :round')
             ->andWhere('q.id > :questionId')
             ->setParameter('round', $round)
@@ -36,8 +34,6 @@ class QuestionRepository extends ServiceEntityRepository
     public function findPreviousInRound(Round $round, UuidInterface $beforeQuestionId): ?Question
     {
         return $this->createQueryBuilder('q')
-            ->leftJoin('q.answers', 'a')
-            ->addSelect('a')
             ->where('q.round = :round')
             ->andWhere('q.id < :questionId')
             ->setParameter('round', $round)
