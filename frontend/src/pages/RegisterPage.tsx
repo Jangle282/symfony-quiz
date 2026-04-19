@@ -39,9 +39,11 @@ export default function RegisterPage() {
       return;
     }
 
+    const trimmedUsername = username.trim();
+
     setIsSubmitting(true);
     try {
-      await register(username, password);
+      await register(trimmedUsername, password);
       navigate('/login');
     } catch (err) {
       if (axios.isAxiosError(err)) {
