@@ -64,6 +64,7 @@ class PreviousQuestionTest extends ApiTestCase
         $response = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertNotNull($response['question']);
         $this->assertSame($firstQuestion->getId()->toString(), $response['question']['id']);
+        $this->assertCount(2, $response['question']['answers']);
 
         // Verify is_correct is NOT exposed
         foreach ($response['question']['answers'] as $answer) {
