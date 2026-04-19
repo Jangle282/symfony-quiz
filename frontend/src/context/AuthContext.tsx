@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { User } from '../types';
 import * as authService from '../api/authService';
+import { performTokenRefresh } from '../api/client';
 
 export interface AuthContextValue {
   user: User | null;
@@ -35,17 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshTokenValue = localStorage.getItem('refresh_token');
 
     if (refreshTokenValue && !user) {
-      authService
-        .refreshToken(refreshTokenValue)
+      performTokenRefresh()
         .then((data) => {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('refresh_token', data.refresh_token);
           setToken(data.token);
           setUser(data.user);
         })
         .catch(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
           setToken(null);
           setUser(null);
         })
