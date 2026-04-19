@@ -1,11 +1,12 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
+  async function handleLogout() {
+    await logout();
     navigate('/login');
   }
 

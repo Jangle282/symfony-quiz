@@ -8,6 +8,19 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
 
+let authFailureCallback: (() => void) | null = null;
+
+export function setAuthFailureCallback(cb: (() => void) | null) {
+  authFailureCallback = cb;
+}
+
+function handleAuthFailure() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  authFailureCallback?.();
+}
+
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -43,11 +56,11 @@ export function performTokenRefresh(): Promise<RefreshResponse> {
     .then(({ data }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       return data;
     })
     .catch((error) => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
+      handleAuthFailure();
       throw error;
     })
     .finally(() => {
@@ -80,7 +93,6 @@ api.interceptors.response.use(
         originalRequest.headers.set('Authorization', `Bearer ${data.token}`);
         return api(originalRequest);
       } catch (refreshError) {
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
