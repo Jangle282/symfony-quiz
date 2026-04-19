@@ -24,6 +24,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/srv/app:delegated
+      - .:/srv/project:delegated
     environment:
       SYMFONY_ENV: dev
       DATABASE_URL: "postgresql://app:app@postgres:5432/app?serverVersion=15&charset=utf8"

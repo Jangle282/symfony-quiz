@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Question;
+use App\Entity\Round;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @extends ServiceEntityRepository<Question>
@@ -16,28 +18,29 @@ class QuestionRepository extends ServiceEntityRepository
         parent::__construct($registry, Question::class);
     }
 
-//    /**
-//     * @return Question[] Returns an array of Question objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('q')
-//            ->andWhere('q.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('q.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findNextInRound(Round $round, UuidInterface $afterQuestionId): ?Question
+    {
+        return $this->createQueryBuilder('q')
+            ->where('q.round = :round')
+            ->andWhere('q.id > :questionId')
+            ->setParameter('round', $round)
+            ->setParameter('questionId', $afterQuestionId)
+            ->orderBy('q.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 
-//    public function findOneBySomeField($value): ?Question
-//    {
-//        return $this->createQueryBuilder('q')
-//            ->andWhere('q.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function findPreviousInRound(Round $round, UuidInterface $beforeQuestionId): ?Question
+    {
+        return $this->createQueryBuilder('q')
+            ->where('q.round = :round')
+            ->andWhere('q.id < :questionId')
+            ->setParameter('round', $round)
+            ->setParameter('questionId', $beforeQuestionId)
+            ->orderBy('q.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

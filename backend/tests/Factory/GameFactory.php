@@ -20,7 +20,6 @@ final class GameFactory extends PersistentProxyObjectFactory
         return [
             'createdBy' => UserFactory::new(),
             'difficulty' => DifficultyFactory::new(),
-            'totalScore' => 100,
             'startedAt' => new \DateTimeImmutable(),
         ];
     }

@@ -3,79 +3,75 @@
 namespace App\Controller\Auth;
 
 use App\Attribute\RateLimited;
-use App\Entity\User;
-use App\Entity\RefreshToken;
-use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\ApiController;
+use App\Service\AuthService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api')]
-class LoginController extends AbstractController
+class LoginController extends ApiController
 {
     public function __construct(
-        private UserPasswordHasherInterface $passwordHasher,
-        private JWTTokenManagerInterface $jwtManager,
+        private AuthService $authService,
     ) {
     }
 
     #[Route('/login', name: 'api_login', methods: ['POST'])]
     #[RateLimited('api_login', message: 'Too many login attempts, please try again later.')]
-    public function login(
-        Request $request,
-        UserRepository $userRepository,
-        EntityManagerInterface $entityManager
-    ): JsonResponse {
+    #[OA\Post(
+        path: '/api/login',
+        summary: 'Authenticate user and get JWT token',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['username', 'password'],
+                properties: [
+                    new OA\Property(property: 'username', type: 'string', example: 'johndoe'),
+                    new OA\Property(property: 'password', type: 'string', example: 'S3cure!Pass0'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'token', type: 'string', description: 'JWT access token'),
+                        new OA\Property(property: 'refresh_token', type: 'string', description: 'Refresh token'),
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'username', type: 'string'),
+                                new OA\Property(property: 'createdAt', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updatedAt', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Invalid credentials'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
+    public function login(Request $request): JsonResponse
+    {
         $data = $this->getJsonBody($request);
 
-        $username = trim((string) ($data['username'] ?? ''));
+        $username = (string) ($data['username'] ?? '');
         $password = (string) ($data['password'] ?? '');
 
-        $user = $userRepository->findOneByUsername($username);
-        if (!$user instanceof User || !$this->passwordHasher->isPasswordValid($user, $password)) {
-            return $this->json(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $token = $this->jwtManager->create($user);
-
-        // create a refresh token (rotating, stored server-side)
-        $refreshToken = new RefreshToken();
-        $refreshToken->setUser($user);
-        $refreshToken->setToken(bin2hex(random_bytes(64)));
-        $refreshToken->setExpiresAt(new \DateTimeImmutable('+30 days'));
-        $refreshToken->setRevoked(false);
-
-        $entityManager->persist($refreshToken);
-        $entityManager->flush();
+        $result = $this->authService->login($username, $password);
 
         return $this->json([
-            'token' => $token,
-            'refresh_token' => $refreshToken->getToken(),
-            'user' => $this->serializeUser($user),
+            'token' => $result['token'],
+            'refresh_token' => $result['refresh_token'],
+            'user' => $this->serializeUser($result['user']),
         ]);
-    }
-
-    private function getJsonBody(Request $request): array
-    {
-        try {
-            return $request->toArray();
-        } catch (\Throwable) {
-            return [];
-        }
-    }
-
-    private function serializeUser(User $user): array
-    {
-        return [
-            'id' => (string) $user->getId(),
-            'username' => $user->getUsername(),
-            'createdAt' => $user->getCreatedAt()?->format(DATE_ATOM),
-            'updatedAt' => $user->getUpdatedAt()?->format(DATE_ATOM),
-        ];
     }
 }

@@ -2,18 +2,20 @@
     "name": "Symfony Quiz",
     "dockerComposeFile": "../docker-compose.yml",
     "service": "php",
-    "workspaceFolder": "/srv/app",
+    "runServices": ["php", "postgres", "nginx"],
+    "workspaceFolder": "/srv/project",
     "customizations": {
         "vscode": {
             "settings": {
                 "php.executablePath": "/usr/local/bin/php",
-                "phpunit.config": "phpunit.dist.xml"
+                "phpunit.config": "backend/phpunit.dist.xml"
             },
             "extensions": [
-                "DEVSENSE.phptools-vscode"
+                "DEVSENSE.phptools-vscode",
+                "GitHub.copilot-chat"
             ]
         }
     },
-    "forwardPorts": [8080, 5173, 5432],
+    "forwardPorts": [8080],
     "shutdownAction": "none"
 }

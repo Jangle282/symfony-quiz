@@ -4,156 +4,199 @@ namespace App\Controller;
 
 use App\Attribute\RateLimited;
 use App\Entity\User;
+use App\Exception\NotFoundException;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Service\UserService;
+use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/api/user')]
-class UserController extends AbstractController
+class UserController extends ApiController
 {
-    #[Route('/{id}', name: 'api_profile', methods: ['GET'])]
-    #[RateLimited('api_general')]
-    public function profile(Request $request, string $id, UserRepository $userRepository): JsonResponse
-    {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
+    public function __construct(
+        private UserService $userService,
+    ) {
+    }
 
-        $user = $userRepository->find($id);
+    #[Route('/{user_id}', name: 'api_profile', methods: ['GET'])]
+    #[RateLimited('api_general')]
+    #[OA\Get(
+        path: '/api/user/{user_id}',
+        summary: 'Get user profile and games',
+        security: [['Bearer' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User profile with games',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'username', type: 'string'),
+                                new OA\Property(property: 'createdAt', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updatedAt', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                        new OA\Property(
+                            property: 'games',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'role', type: 'string'),
+                                    new OA\Property(property: 'joinedAt', type: 'string', format: 'date-time'),
+                                    new OA\Property(property: 'createdBy', type: 'string', format: 'uuid'),
+                                    new OA\Property(property: 'totalScore', type: 'integer'),
+                                    new OA\Property(property: 'startedAt', type: 'string', format: 'date-time'),
+                                    new OA\Property(property: 'completedAt', type: 'string', format: 'date-time', nullable: true),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 404, description: 'User not found'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
+    public function profile(string $user_id, UserRepository $userRepository): JsonResponse
+    {
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
-            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+            throw new NotFoundException('User not found.');
         }
 
         $this->denyAccessUnlessGranted('USER_VIEW', $user);
 
-        $games = [];
-        foreach ($user->getUserGames() as $userGame) {
-            $game = $userGame->getGame();
-            if ($game === null) {
-                continue;
-            }
-
-            $games[] = [
-                'id' => (string) $game->getId(),
-                'role' => $userGame->getRole(),
-                'joinedAt' => $userGame->getJoinedAt()?->format(DATE_ATOM),
-                'createdBy' => (string) $game->getCreatedBy()?->getId(),
-                'totalScore' => $game->getTotalScore(),
-                'startedAt' => $game->getStartedAt()?->format(DATE_ATOM),
-                'completedAt' => $game->getCompletedAt()?->format(DATE_ATOM),
-            ];
-        }
-
-        return $this->json([
-            'user' => [
-                'id' => (string) $user->getId(),
-                'username' => $user->getUsername(),
-                'createdAt' => $user->getCreatedAt()?->format(DATE_ATOM),
-                'updatedAt' => $user->getUpdatedAt()?->format(DATE_ATOM),
-            ],
-            'games' => $games,
-        ]);
+        return $this->json($this->userService->getUserProfile($user));
     }
 
-    #[Route('/{id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
+    #[Route('/{user_id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
     #[RateLimited('api_general')]
-    public function updateUsername(
-        Request $request,
-        string $id,
-        UserRepository $userRepository,
-        EntityManagerInterface $entityManager
-    ): JsonResponse {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $user = $userRepository->find($id);
+    #[OA\Patch(
+        path: '/api/user/{user_id}/username',
+        summary: 'Update username',
+        security: [['Bearer' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['username'],
+                properties: [
+                    new OA\Property(property: 'username', type: 'string', example: 'newusername'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Username updated',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', format: 'uuid'),
+                                new OA\Property(property: 'username', type: 'string'),
+                                new OA\Property(property: 'createdAt', type: 'string', format: 'date-time'),
+                                new OA\Property(property: 'updatedAt', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Username is required'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 409, description: 'Username already exists'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
+    public function updateUsername(Request $request, string $user_id, UserRepository $userRepository): JsonResponse
+    {
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
-            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+            throw new NotFoundException('User not found.');
         }
 
         $this->denyAccessUnlessGranted('USER_UPDATE', $user);
 
         $data = $this->getJsonBody($request);
+        $newUsername = (string) ($data['username'] ?? '');
 
-        $newUsername = trim((string) ($data['username'] ?? ''));
-        if ($newUsername === '') {
-            return $this->json(['error' => 'Username is required.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $existingUser = $userRepository->findOneByUsername($newUsername);
-        if ($existingUser !== null && (string) $existingUser->getId() !== (string) $user->getId()) {
-            return $this->json(['error' => 'Username already exists.'], Response::HTTP_CONFLICT);
-        }
-
-        $user->setUsername($newUsername);
-        $user->setUpdatedAt(new \DateTimeImmutable());
-        $entityManager->flush();
+        $user = $this->userService->updateUsername($user, $newUsername);
 
         return $this->json([
-            'user' => [
-                'id' => (string) $user->getId(),
-                'username' => $user->getUsername(),
-                'createdAt' => $user->getCreatedAt()?->format(DATE_ATOM),
-                'updatedAt' => $user->getUpdatedAt()?->format(DATE_ATOM),
-            ],
+            'user' => $this->serializeUser($user),
         ]);
     }
 
-    #[Route('/{id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
+    #[Route('/{user_id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
     #[RateLimited('api_general')]
-    public function updatePassword(
-        Request $request,
-        string $id,
-        UserRepository $userRepository,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
-    ): JsonResponse {
-        $authenticatedUser = $this->getUser();
-        if (!$authenticatedUser instanceof User) {
-            return $this->json(['error' => 'Unauthorized.'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        $user = $userRepository->find($id);
+    #[OA\Patch(
+        path: '/api/user/{user_id}/password',
+        summary: 'Update password',
+        security: [['Bearer' => []]],
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['current_password', 'new_password'],
+                properties: [
+                    new OA\Property(property: 'current_password', type: 'string'),
+                    new OA\Property(property: 'new_password', type: 'string', example: 'N3w!Passw0rd'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Password updated',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Password updated successfully.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Invalid current password or new password validation error'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Access denied'),
+            new OA\Response(response: 429, description: 'Too many requests'),
+        ]
+    )]
+    public function updatePassword(Request $request, string $user_id, UserRepository $userRepository): JsonResponse
+    {
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
-            return $this->json(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+            throw new NotFoundException('User not found.');
         }
 
         $this->denyAccessUnlessGranted('USER_UPDATE', $user);
 
         $data = $this->getJsonBody($request);
-
         $currentPassword = (string) ($data['current_password'] ?? '');
         $newPassword = (string) ($data['new_password'] ?? '');
 
-        if (!$passwordHasher->isPasswordValid($user, $currentPassword)) {
-            return $this->json(['error' => 'Current password is invalid.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        if (mb_strlen($newPassword) < 10 || !preg_match('/[A-Za-z]/', $newPassword) || !preg_match('/\d/', $newPassword) || !preg_match('/[^A-Za-z0-9]/', $newPassword)) {
-            return $this->json(['error' => 'New password must be at least 10 characters and include letters, numbers, and symbols.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
-        $user->setUpdatedAt(new \DateTimeImmutable());
-        $entityManager->flush();
+        $this->userService->updatePassword($user, $currentPassword, $newPassword);
 
         return $this->json(['message' => 'Password updated successfully.']);
-    }
-
-    private function getJsonBody(Request $request): array
-    {
-        try {
-            return $request->toArray();
-        } catch (\Throwable) {
-            return [];
-        }
     }
 }

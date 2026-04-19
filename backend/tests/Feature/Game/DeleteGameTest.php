@@ -8,7 +8,7 @@ use App\Tests\Factory\GameFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Trait\AuthenticatesUsers;
 
-class GameControllerTest extends ApiTestCase
+class DeleteGameTest extends ApiTestCase
 {
     use AuthenticatesUsers;
 

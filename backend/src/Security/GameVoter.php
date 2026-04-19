@@ -37,13 +37,17 @@ class GameVoter extends Voter
 
     private function isParticipant(User $user, Game $game): bool
     {
+        if ($game->getCreatedBy()?->getId()?->toString() === $user->getId()?->toString()) {
+            return true;
+        }
+
         foreach ($game->getUserGames() as $userGame) {
             if ($userGame->getUser()?->getId()?->toString() === $user->getId()?->toString()) {
                 return true;
             }
         }
 
-        return $game->getCreatedBy()?->getId()?->toString() === $user->getId()?->toString();
+        return false;
     }
 
     private function isHost(User $user, Game $game): bool

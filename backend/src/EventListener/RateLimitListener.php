@@ -10,12 +10,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[AsEventListener(event: KernelEvents::CONTROLLER, method: 'onKernelController')]
 class RateLimitListener
 {
     public function __construct(
         private ServiceLocator $rateLimiters,
+        private TokenStorageInterface $tokenStorage,
     ) {
     }
 
@@ -42,6 +45,16 @@ class RateLimitListener
         $request = $event->getRequest();
         $ip = $request->getClientIp() ?? 'anonymous';
 
+        // Use user ID for authenticated routes, fall back to IP for unauthenticated
+        $key = $ip;
+        $token = $this->tokenStorage->getToken();
+        if ($token !== null) {
+            $user = $token->getUser();
+            if ($user instanceof UserInterface) {
+                $key = 'user_' . $user->getUserIdentifier();
+            }
+        }
+
         foreach ($attributes as $attribute) {
             $rateLimited = $attribute->newInstance();
             $limiterName = $rateLimited->limiter;
@@ -52,7 +65,7 @@ class RateLimitListener
 
             /** @var RateLimiterFactory $factory */
             $factory = $this->rateLimiters->get($limiterName);
-            $limiter = $factory->create($ip);
+            $limiter = $factory->create($key);
             $limit = $limiter->consume();
 
             if (!$limit->isAccepted()) {

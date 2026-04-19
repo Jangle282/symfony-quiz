@@ -27,6 +27,7 @@ class Question
     private ?string $questionText = null;
 
     #[ORM\OneToMany(mappedBy: 'question', targetEntity: Answer::class, cascade: ["remove"])]
+    #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $answers;
 
     public function __construct()

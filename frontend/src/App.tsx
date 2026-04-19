@@ -1,40 +1,37 @@
 import { useMemo } from 'react'
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
-import { fetchHealth } from './api/health'
-import './App.css'
-
-function HealthStatus() {
-  const { data, isLoading, isError } = useQuery(['health'], fetchHealth, {
-    retry: false,
-    refetchOnWindowFocus: false,
-  })
-
-  if (isLoading) return <p>Checking API status…</p>
-  if (isError) return <p style={{ color: 'var(--danger)' }}>API unreachable</p>
-
-  return (
-    <div>
-      <p>API status: <strong>{data.status}</strong></p>
-      <p>Timestamp: {data.timestamp}</p>
-    </div>
-  )
-}
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './components/common/ProtectedRoute'
+import Layout from './components/common/Layout'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import LobbyPage from './pages/LobbyPage'
+import GamePage from './pages/GamePage'
+import ResultsPage from './pages/ResultsPage'
+import ProfilePage from './pages/ProfilePage'
 
 function App() {
   const queryClient = useMemo(() => new QueryClient(), [])
 
   return (
     <QueryClientProvider client={queryClient}>
-      <main className="app">
-        <header>
-          <h1>Pub Quiz</h1>
-          <p>React + Symfony starter</p>
-        </header>
-        <section>
-          <h2>Backend health</h2>
-          <HealthStatus />
-        </section>
-      </main>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/lobby" element={<LobbyPage />} />
+              <Route path="/game/:id" element={<GamePage />} />
+              <Route path="/results/:id" element={<ResultsPage />} />
+              <Route path="/user" element={<ProfilePage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/lobby" replace />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   )
 }

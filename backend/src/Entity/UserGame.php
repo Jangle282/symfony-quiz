@@ -6,6 +6,7 @@ use App\Repository\UserGameRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
+use App\Entity\UserGameRole;
 
 #[ORM\Entity(repositoryClass: UserGameRepository::class)]
 class UserGame
@@ -27,8 +28,8 @@ class UserGame
     #[ORM\Column]
     private ?\DateTimeImmutable $joinedAt = null;
 
-    #[ORM\Column(length: 20)]
-    private ?string $role = null;
+    #[ORM\Column(length: 20, enumType: UserGameRole::class)]
+    private ?UserGameRole $role = null;
 
     public function __construct()
     {
@@ -76,12 +77,12 @@ class UserGame
         return $this;
     }
 
-    public function getRole(): ?string
+    public function getRole(): ?UserGameRole
     {
         return $this->role;
     }
 
-    public function setRole(string $role): static
+    public function setRole(UserGameRole $role): static
     {
         $this->role = $role;
 

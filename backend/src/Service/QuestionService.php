@@ -19,10 +19,10 @@ class QuestionService
     /**
      * @param Round[] $rounds
      */
-    public function createQuestionsAndAnswers(array $rounds, Difficulty $difficulty): void
+    public function createQuestionsAndAnswers(array $rounds, Difficulty $difficulty, int $questionsPerRound = 10): void
     {
         foreach ($rounds as $round) {
-            $questionDTOs = $this->provider->fetchQuestions($round, $difficulty);
+            $questionDTOs = $this->provider->fetchQuestions($round, $difficulty, $questionsPerRound);
 
             foreach ($questionDTOs as $questionDTO) {
                 $question = new Question();

@@ -11,4 +11,9 @@ when@dev: &dev
             autowire: true
             autoconfigure: true
 
+        App\Tests\Story\:
+            resource: '%kernel.project_dir%/tests/Story/'
+            autowire: true
+            autoconfigure: true
+
 when@test: *dev
