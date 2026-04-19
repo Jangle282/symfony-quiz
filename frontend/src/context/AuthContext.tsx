@@ -27,15 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem('token'),
   );
-  const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem('refresh_token'));
 
   const isAuthenticated = !!token && !!user;
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
     const refreshTokenValue = localStorage.getItem('refresh_token');
 
-    if (storedToken && refreshTokenValue && !user) {
+    if (refreshTokenValue && !user) {
       authService
         .refreshToken(refreshTokenValue)
         .then((data) => {
