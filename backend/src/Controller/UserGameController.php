@@ -7,6 +7,7 @@ use App\Entity\Game;
 use App\Entity\User;
 use App\Entity\UserGameRole;
 use App\Service\UserGameService;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -19,15 +20,15 @@ class UserGameController extends ApiController
     ) {
     }
 
-    #[Route('/api/games/{id}/join', name: 'api_game_join', methods: ['POST'])]
+    #[Route('/api/games/{game_id}/join', name: 'api_game_join', methods: ['POST'])]
     #[RateLimited('api_general')]
     #[OA\Post(
-        path: '/api/games/{id}/join',
+        path: '/api/games/{game_id}/join',
         summary: 'Join a game as a participant',
         security: [['Bearer' => []]],
         tags: ['Games'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -46,7 +47,7 @@ class UserGameController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function join(#[CurrentUser] User $user, Game $game): JsonResponse
+    public function join(#[CurrentUser] User $user, #[MapEntity(id: 'game_id')] Game $game): JsonResponse
     {
         $userGame = $this->userGameService->joinGame($user, $game);
 

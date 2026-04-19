@@ -20,15 +20,15 @@ class UserController extends ApiController
     ) {
     }
 
-    #[Route('/{id}', name: 'api_profile', methods: ['GET'])]
+    #[Route('/{user_id}', name: 'api_profile', methods: ['GET'])]
     #[RateLimited('api_general')]
     #[OA\Get(
-        path: '/api/user/{id}',
+        path: '/api/user/{user_id}',
         summary: 'Get user profile and games',
         security: [['Bearer' => []]],
         tags: ['Users'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -70,9 +70,9 @@ class UserController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function profile(string $id, UserRepository $userRepository): JsonResponse
+    public function profile(string $user_id, UserRepository $userRepository): JsonResponse
     {
-        $user = $userRepository->find($id);
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');
         }
@@ -82,15 +82,15 @@ class UserController extends ApiController
         return $this->json($this->userService->getUserProfile($user));
     }
 
-    #[Route('/{id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
+    #[Route('/{user_id}/username', name: 'api_profile_update_username', methods: ['PATCH'])]
     #[RateLimited('api_general')]
     #[OA\Patch(
-        path: '/api/user/{id}/username',
+        path: '/api/user/{user_id}/username',
         summary: 'Update username',
         security: [['Bearer' => []]],
         tags: ['Users'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -127,9 +127,9 @@ class UserController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function updateUsername(Request $request, string $id, UserRepository $userRepository): JsonResponse
+    public function updateUsername(Request $request, string $user_id, UserRepository $userRepository): JsonResponse
     {
-        $user = $userRepository->find($id);
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');
         }
@@ -146,15 +146,15 @@ class UserController extends ApiController
         ]);
     }
 
-    #[Route('/{id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
+    #[Route('/{user_id}/password', name: 'api_profile_update_password', methods: ['PATCH'])]
     #[RateLimited('api_general')]
     #[OA\Patch(
-        path: '/api/user/{id}/password',
+        path: '/api/user/{user_id}/password',
         summary: 'Update password',
         security: [['Bearer' => []]],
         tags: ['Users'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'user_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -182,9 +182,9 @@ class UserController extends ApiController
             new OA\Response(response: 429, description: 'Too many requests'),
         ]
     )]
-    public function updatePassword(Request $request, string $id, UserRepository $userRepository): JsonResponse
+    public function updatePassword(Request $request, string $user_id, UserRepository $userRepository): JsonResponse
     {
-        $user = $userRepository->find($id);
+        $user = $userRepository->find($user_id);
         if (!$user instanceof User) {
             throw new NotFoundException('User not found.');
         }

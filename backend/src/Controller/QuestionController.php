@@ -18,17 +18,17 @@ class QuestionController extends ApiController
     ) {
     }
 
-    #[Route('/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/next', name: 'api_game_next_question', methods: ['GET'])]
+    #[Route('/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/next', name: 'api_game_next_question', methods: ['GET'])]
     #[RateLimited('api_general')]
     #[OA\Get(
-        path: '/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/next',
+        path: '/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/next',
         summary: 'Get next question in a round',
         security: [['Bearer' => []]],
         tags: ['Questions'],
         parameters: [
-            new OA\Parameter(name: 'gameId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'roundId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'questionId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'round_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'question_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -65,34 +65,34 @@ class QuestionController extends ApiController
         ]
     )]
     public function nextQuestion(
-        string $gameId,
-        string $roundId,
-        string $questionId,
+        string $game_id,
+        string $round_id,
+        string $question_id,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
-        $game = $entityManager->find(Game::class, $gameId);
+        $game = $entityManager->find(Game::class, $game_id);
         if (!$game) {
             throw new NotFoundException('Game not found.');
         }
 
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
 
-        $question = $this->questionNavigationService->getNextQuestion($game, $roundId, $questionId);
+        $question = $this->questionNavigationService->getNextQuestion($game, $round_id, $question_id);
 
         return $this->json(['question' => $question]);
     }
 
-    #[Route('/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/previous', name: 'api_game_previous_question', methods: ['GET'])]
+    #[Route('/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/previous', name: 'api_game_previous_question', methods: ['GET'])]
     #[RateLimited('api_general')]
     #[OA\Get(
-        path: '/api/games/{gameId}/rounds/{roundId}/questions/{questionId}/previous',
+        path: '/api/games/{game_id}/rounds/{round_id}/questions/{question_id}/previous',
         summary: 'Get previous question in a round',
         security: [['Bearer' => []]],
         tags: ['Questions'],
         parameters: [
-            new OA\Parameter(name: 'gameId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'roundId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-            new OA\Parameter(name: 'questionId', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'game_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'round_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'question_id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
         ],
         responses: [
             new OA\Response(
@@ -129,19 +129,19 @@ class QuestionController extends ApiController
         ]
     )]
     public function previousQuestion(
-        string $gameId,
-        string $roundId,
-        string $questionId,
+        string $game_id,
+        string $round_id,
+        string $question_id,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
-        $game = $entityManager->find(Game::class, $gameId);
+        $game = $entityManager->find(Game::class, $game_id);
         if (!$game) {
             throw new NotFoundException('Game not found.');
         }
 
         $this->denyAccessUnlessGranted('GAME_VIEW', $game);
 
-        $question = $this->questionNavigationService->getPreviousQuestion($game, $roundId, $questionId);
+        $question = $this->questionNavigationService->getPreviousQuestion($game, $round_id, $question_id);
 
         return $this->json(['question' => $question]);
     }
