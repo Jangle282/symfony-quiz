@@ -28,14 +28,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!username.trim() || !password) {
+    const trimmedUsername = username.trim();
+
+    if (!trimmedUsername || !password) {
       setError('Username and password are required.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await login(username, password);
+      await login(trimmedUsername, password);
       navigate('/lobby');
     } catch (err) {
       if (axios.isAxiosError(err)) {
