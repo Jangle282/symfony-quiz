@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   async function handleLogout() {
     await logout();
@@ -19,14 +19,6 @@ export default function Layout() {
           </Link>
         </div>
         <div className="flex-none gap-2">
-          {user && (
-            <span className="text-sm text-base-content/70">
-              {user.username}
-            </span>
-          )}
-          <Link to="/lobby" className="btn btn-ghost btn-sm">
-            Home
-          </Link>
           <Link to="/user" className="btn btn-ghost btn-sm">
             Profile
           </Link>
