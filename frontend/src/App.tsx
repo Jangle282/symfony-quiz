@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Layout from './components/common/Layout'
 import LoginPage from './pages/LoginPage'
@@ -15,6 +16,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -32,6 +34,7 @@ function App() {
           <Route path="*" element={<Navigate to="/lobby" replace />} />
         </Routes>
       </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

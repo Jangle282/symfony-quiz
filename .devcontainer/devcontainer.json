@@ -2,7 +2,7 @@
     "name": "Symfony Quiz",
     "dockerComposeFile": "../docker-compose.yml",
     "service": "php",
-    "runServices": ["php", "postgres", "nginx"],
+    "runServices": ["php", "postgres", "nginx", "node"],
     "workspaceFolder": "/srv/project",
     "customizations": {
         "vscode": {
