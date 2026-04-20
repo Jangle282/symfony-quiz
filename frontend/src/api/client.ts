@@ -46,6 +46,7 @@ export function performTokenRefresh(): Promise<RefreshResponse> {
 
   const refreshToken = localStorage.getItem('refresh_token');
   if (!refreshToken) {
+    handleAuthFailure();
     return Promise.reject(new Error('No refresh token available'));
   }
 
