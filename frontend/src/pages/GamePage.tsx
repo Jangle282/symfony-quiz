@@ -62,7 +62,7 @@ export default function GamePage() {
           setQuestionNumber(
             data.current_question
               ? round.answered_questions + 1
-              : round.answered_questions + 1,
+              : round.total_questions,
           );
         }
       } catch (err) {
@@ -183,7 +183,7 @@ export default function GamePage() {
     );
   }
 
-  if (!game || !currentRound || !currentQuestion) {
+  if (!game || !currentRound) {
     return (
       <div className="container mx-auto p-8 max-w-2xl">
         <div className="alert alert-warning">
@@ -194,6 +194,52 @@ export default function GamePage() {
   }
 
   const totalQuestions = currentRound.total_questions;
+  const allAnswered = currentRound.answered_questions >= totalQuestions;
+
+  if (!currentQuestion) {
+    return (
+      <div className="container mx-auto p-8 max-w-2xl" data-cy="game-page">
+        <GameHeader
+          name={game.name}
+          difficulty={game.difficulty}
+          roundNumber={currentRound.round_number}
+          category={currentRound.category}
+          questionNumber={totalQuestions}
+          totalQuestions={totalQuestions}
+        />
+
+        {allAnswered ? (
+          <div className="card bg-base-200 shadow-md p-6 mb-6 text-center" data-cy="all-answered">
+            <p className="mb-4">All questions answered! Ready to view your results.</p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleViewResults}
+              disabled={navigating}
+              data-cy="btn-view-results"
+            >
+              {navigating ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'View Results'
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="alert alert-warning" data-cy="no-questions">
+            <span>No questions available for this game.</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="alert alert-error mb-4" data-cy="game-action-error">
+            <span>{error}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const isLastQuestion = questionNumber >= totalQuestions;
   const needsSubmit = selectedAnswerId !== submittedAnswerId;
 
