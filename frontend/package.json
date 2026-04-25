@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cy:open": "cypress open --component",
+    "cy:run": "cypress run --component"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
@@ -23,6 +25,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.0",
+    "cypress": "^15.14.0",
     "daisyui": "^5.5.19",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
