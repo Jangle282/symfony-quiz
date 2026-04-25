@@ -194,7 +194,7 @@ export default function GamePage() {
   }
 
   const totalQuestions = currentRound.total_questions;
-  const allAnswered = currentRound.answered_questions >= totalQuestions;
+  const allAnswered = currentRound.answered_questions === totalQuestions;
 
   if (!currentQuestion) {
     return (
@@ -204,7 +204,7 @@ export default function GamePage() {
           difficulty={game.difficulty}
           roundNumber={currentRound.round_number}
           category={currentRound.category}
-          questionNumber={totalQuestions}
+          questionNumber={questionNumber}
           totalQuestions={totalQuestions}
         />
 
