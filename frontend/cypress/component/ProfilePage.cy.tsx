@@ -146,7 +146,7 @@ describe('ProfilePage', () => {
 
     cy.get('[data-cy="password-validation-error"]').should(
       'contain.text',
-      'New password must be at least 10 characters long.',
+      'Password must be at least 10 characters and include letters, numbers, and symbols.',
     );
   });
 
@@ -160,8 +160,8 @@ describe('ProfilePage', () => {
     mountProfilePage();
     cy.wait('@getProfile');
 
-    cy.get('[data-cy="current-password-input"]').type('current-pass-123');
-    cy.get('[data-cy="new-password-input"]').type('new-pass-12345');
+    cy.get('[data-cy="current-password-input"]').type('current-pass-123!');
+    cy.get('[data-cy="new-password-input"]').type('new-pass-123!');
     cy.get('[data-cy="password-submit"]').click();
 
     cy.wait('@patchPassword');

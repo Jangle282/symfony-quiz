@@ -24,8 +24,13 @@ export default function UpdatePasswordForm({
       setValidationError('Current password and new password are required.');
       return;
     }
-    if (newPassword.length < 10) {
-      setValidationError('New password must be at least 10 characters long.');
+    if (
+      newPassword.length < 10 ||
+      !/[A-Za-z]/.test(newPassword) ||
+      !/\d/.test(newPassword) ||
+      !/[^A-Za-z0-9]/.test(newPassword)
+    ) {
+      setValidationError('Password must be at least 10 characters and include letters, numbers, and symbols.');
       return;
     }
 
