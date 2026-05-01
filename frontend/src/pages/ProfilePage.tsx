@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { deleteGame } from '../api/gameService';
 import { getUser, updatePassword, updateUsername } from '../api/userService';
 import ConfirmModal from '../components/common/ConfirmModal';
@@ -9,16 +8,7 @@ import GameHistory from '../components/profile/GameHistory';
 import UpdatePasswordForm from '../components/profile/UpdatePasswordForm';
 import UpdateUsernameForm from '../components/profile/UpdateUsernameForm';
 import { useAuth } from '../hooks/useAuth';
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError(error)) {
-    const responseError = error.response?.data?.error;
-    if (typeof responseError === 'string' && responseError.trim()) {
-      return responseError;
-    }
-  }
-  return fallback;
-}
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -47,7 +37,7 @@ export default function ProfilePage() {
     },
     onError: (error) => {
       setUsernameSuccess(null);
-      setUsernameError(extractErrorMessage(error, 'Failed to update username.'));
+      setUsernameError(extractApiErrorMessage(error, 'Failed to update username.'));
     },
   });
 
@@ -60,7 +50,7 @@ export default function ProfilePage() {
     },
     onError: (error) => {
       setPasswordSuccess(null);
-      setPasswordError(extractErrorMessage(error, 'Failed to update password.'));
+      setPasswordError(extractApiErrorMessage(error, 'Failed to update password.'));
     },
   });
 
@@ -72,7 +62,7 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
     },
     onError: (error) => {
-      setDeleteError(extractErrorMessage(error, 'Failed to delete game.'));
+      setDeleteError(extractApiErrorMessage(error, 'Failed to delete game.'));
     },
   });
 
@@ -98,7 +88,7 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto p-8 max-w-4xl" data-cy="profile-error">
         <div className="alert alert-error mb-4">
-          <span>{extractErrorMessage(profileQuery.error, 'Failed to load profile.')}</span>
+          <span>{extractApiErrorMessage(profileQuery.error, 'Failed to load profile.')}</span>
         </div>
         <Link to="/lobby" className="btn btn-outline">
           Back to Lobby

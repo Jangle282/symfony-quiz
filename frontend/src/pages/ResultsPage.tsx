@@ -1,20 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { deleteGame, getResults } from '../api/gameService';
 import QuestionBreakdown from '../components/game/QuestionBreakdown';
 import ConfirmModal from '../components/common/ConfirmModal';
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError(error)) {
-    const responseError = error.response?.data?.error;
-    if (typeof responseError === 'string' && responseError.trim()) {
-      return responseError;
-    }
-  }
-  return fallback;
-}
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function ResultsPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,7 +51,7 @@ export default function ResultsPage() {
     return (
       <div className="container mx-auto p-8 max-w-3xl" data-cy="results-error">
         <div className="alert alert-error mb-4">
-          <span>{extractErrorMessage(error, 'Failed to load game results.')}</span>
+          <span>{extractApiErrorMessage(error, 'Failed to load game results.')}</span>
         </div>
         <Link to="/lobby" className="btn btn-outline">
           Back to Lobby
@@ -107,7 +97,7 @@ export default function ResultsPage() {
 
       {deleteMutation.isError && (
         <div className="alert alert-error mb-4" data-cy="results-delete-error">
-          <span>{extractErrorMessage(deleteMutation.error, 'Failed to delete game.')}</span>
+          <span>{extractApiErrorMessage(deleteMutation.error, 'Failed to delete game.')}</span>
         </div>
       )}
 
