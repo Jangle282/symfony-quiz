@@ -121,7 +121,7 @@ export default function ResultsPage() {
           onClick={() => setIsDeleteModalOpen(true)}
           data-cy="btn-show-delete-modal"
         >
-          ShowDeleteModal
+          Delete game
         </button>
       </div>
 
