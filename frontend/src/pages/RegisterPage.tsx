@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import axios from 'axios';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function RegisterPage() {
   const { isAuthenticated, isLoading: authLoading, register } = useAuth();
@@ -46,15 +46,7 @@ export default function RegisterPage() {
       await register(trimmedUsername, password);
       navigate('/login');
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const msg =
-          err.response?.data?.message ??
-          err.response?.data?.error ??
-          'Registration failed. Please try again.';
-        setError(msg);
-      } else {
-        setError('An unexpected error occurred.');
-      }
+      setError(extractApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }

@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import axios from 'axios';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -40,15 +40,7 @@ export default function LoginPage() {
       await login(trimmedUsername, password);
       navigate('/lobby');
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const msg =
-          err.response?.data?.message ??
-          err.response?.data?.error ??
-          'Login failed. Please check your credentials.';
-        setError(msg);
-      } else {
-        setError('An unexpected error occurred.');
-      }
+      setError(extractApiErrorMessage(err, 'Login failed. Please check your credentials.'));
     } finally {
       setIsSubmitting(false);
     }

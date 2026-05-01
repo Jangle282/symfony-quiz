@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { getGame, completeGame } from '../api/gameService';
 import { getNextQuestion, getPreviousQuestion } from '../api/questionService';
 import { selectAnswer } from '../api/answerService';
@@ -8,6 +7,7 @@ import type { GameDetailsResponse, Question, RoundSummary } from '../types';
 import GameHeader from '../components/game/GameHeader';
 import QuestionCard from '../components/game/QuestionCard';
 import QuestionNavigation from '../components/game/QuestionNavigation';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -66,11 +66,7 @@ export default function GamePage() {
           );
         }
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.data?.error) {
-          setError(err.response.data.error);
-        } else {
-          setError('Failed to load game.');
-        }
+        setError(extractApiErrorMessage(err, 'Failed to load game.'));
       } finally {
         setLoading(false);
       }
@@ -92,11 +88,7 @@ export default function GamePage() {
       await selectAnswer(id, currentRound.id, currentQuestion.id, selectedAnswerId);
       setSubmittedAnswerId(selectedAnswerId);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to submit answer.');
-      }
+      setError(extractApiErrorMessage(err, 'Failed to submit answer.'));
     } finally {
       setSubmitting(false);
     }
@@ -114,11 +106,7 @@ export default function GamePage() {
         setQuestionNumber((n) => n + 1);
       }
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to load next question.');
-      }
+      setError(extractApiErrorMessage(err, 'Failed to load next question.'));
     } finally {
       setNavigating(false);
     }
@@ -136,11 +124,7 @@ export default function GamePage() {
         setQuestionNumber((n) => n - 1);
       }
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to load previous question.');
-      }
+      setError(extractApiErrorMessage(err, 'Failed to load previous question.'));
     } finally {
       setNavigating(false);
     }
@@ -155,11 +139,7 @@ export default function GamePage() {
       await completeGame(id);
       navigate(`/results/${id}`);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to complete game.');
-      }
+      setError(extractApiErrorMessage(err, 'Failed to complete game.'));
     } finally {
       setNavigating(false);
     }
