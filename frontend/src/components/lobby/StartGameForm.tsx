@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createGame } from '../../api/gameService';
-import axios from 'axios';
+import { extractApiErrorMessage } from '../../utils/apiError';
 
 export default function StartGameForm() {
   const navigate = useNavigate();
@@ -19,11 +19,7 @@ export default function StartGameForm() {
       const game = await createGame(difficulty, name || undefined);
       navigate(`/game/${game.id}`);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to create game. Please try again.');
-      }
+      setError(extractApiErrorMessage(err, 'Failed to create game. Please try again.'));
     } finally {
       setLoading(false);
     }
